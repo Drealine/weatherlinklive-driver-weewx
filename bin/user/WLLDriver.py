@@ -547,6 +547,7 @@ class WLLDriver(weewx.drivers.AbstractDevice):
 
                                         if self.dict_device_id[device_id] == 'iss' or self.dict_device_id[device_id] == 'iss+' or self.dict_device_id[device_id] == 'extra_RainGauge':
 
+
                                             if 'rain_rate_last' in s and s['rain_rate_last'] is not None:
 
                                                 rainRate = s['rain_rate_last']
@@ -578,10 +579,17 @@ class WLLDriver(weewx.drivers.AbstractDevice):
                 rainmultiplier = 0.1
 
 
-        if rainFall_Daily is not None: 
+        if rainFall_Daily is not None:
+
+            logdbg("rainFall_Daily is : {}".format(rainFall_Daily)) 
 
             if self.rain_previous_period is not None:
+
+                logdbg("rain_this_period before transformed is : {}".format(rain_this_period))
+
                 rain_this_period = (rainFall_Daily - self.rain_previous_period) * rainmultiplier
+
+                logdbg("rain_this_period after transformed is : {}".format(rain_this_period))
 
                 if rain_this_period > 0:
 
@@ -594,8 +602,8 @@ class WLLDriver(weewx.drivers.AbstractDevice):
 
                         rain_this_period = rain_this_period / 2.54
 
-                self.rain_previous_period = rainFall_Daily
-                logdbg("Rain rightnow is :" + str(rain_this_period))
+                    self.rain_previous_period = rainFall_Daily
+                    logdbg("Rain rightnow is :" + str(rain_this_period))
 
             else:
 
