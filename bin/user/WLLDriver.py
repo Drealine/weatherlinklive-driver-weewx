@@ -462,7 +462,7 @@ class WLLDriver(weewx.drivers.AbstractDevice):
 
                                             windchill = s['wind_chill']
 
-                                    if udp_enable == 0:
+                                    if self.udp_enable == 0:
 
                                         if self.dict_device_id[device_id] == 'iss' or self.dict_device_id[device_id] == 'iss+' or self.dict_device_id[device_id] == 'extra_Anenometer':
 
@@ -526,7 +526,7 @@ class WLLDriver(weewx.drivers.AbstractDevice):
 
                                 if s['txid'] == device_id:
 
-                                    if udp_enable == 1:
+                                    if self.udp_enable == 1:
 
                                         if self.dict_device_id[device_id] == 'iss' or self.dict_device_id[device_id] == 'iss+' or self.dict_device_id[device_id] == 'extra_Anenometer':
 
