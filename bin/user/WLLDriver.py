@@ -162,6 +162,8 @@ class WLLDriver(weewx.drivers.AbstractDevice):
             inTemp = None
             inHumidity = None
             inDewpoint = None
+            UV = None
+            radiation = None
 
             length_json_count = 0
             length_json = self.length_json - 1
@@ -247,6 +249,15 @@ class WLLDriver(weewx.drivers.AbstractDevice):
 
                                                     windGustDir = s['wind_speed_hi_dir']
 
+                                                if 'uv_index_avg' in s:
+
+                                                    UV = s['uv_index_avg']
+
+                                                if 'solar_rad_avg' in s:
+
+                                                    radiation = s['solar_rad_avg']
+                                                    
+
                                                 if rainSize is not None:
 
                                                     if rainSize == 1:
@@ -269,7 +280,7 @@ class WLLDriver(weewx.drivers.AbstractDevice):
 
                                                                 if rainRate > 0:
 
-                                                                    rainRate = float(rainRate) / 25.4
+                                                                    rainRate = rainRate / 25.4
 
                                                         if 'rainfall_mm' in s:
 
@@ -279,7 +290,7 @@ class WLLDriver(weewx.drivers.AbstractDevice):
 
                                                                 if rain > 0:
 
-                                                                    rain = float(rain) / 25.4
+                                                                    rain = rain / 25.4
 
                                                     #elif rainSize == 3:
 
@@ -345,6 +356,8 @@ class WLLDriver(weewx.drivers.AbstractDevice):
                                'inTemp':  inTemp,
                                'inHumidity':  inHumidity,
                                'inDewpoint' : inDewpoint,
+                               'UV' : UV,
+                               'radiation' : radiation,
                                }
 
             if length_dict_device_id_count > 1:
@@ -394,6 +407,8 @@ class WLLDriver(weewx.drivers.AbstractDevice):
         inTemp = None
         inHumidity = None
         inDewpoint = None
+        UV = None
+        radiation = None
 
         if type_of_packet == 'current_conditions' and data['data'] == None:
 
@@ -490,6 +505,16 @@ class WLLDriver(weewx.drivers.AbstractDevice):
 
                                             rainSize = s['rain_size']
 
+                                    if self.dict_device_id[device_id] == 'iss' or self.dict_device_id[device_id] == 'iss+':
+
+                                        if 'uv_index' in s and s['uv_index'] is not None:
+
+                                            UV = s['uv_index']
+
+                                        if 'solar_rad' in s and s['solar_rad'] is not None:
+
+                                            radiation = s['solar_rad']
+
                             # Next lines are not extra, so no need ID
 
                             elif s['data_structure_type'] == 2 :
@@ -509,6 +534,7 @@ class WLLDriver(weewx.drivers.AbstractDevice):
                                 inHumidity = s['hum_in']
 
                                 inDewpoint = s['dew_point_in']
+
 
                     elif type_of_packet == 'realtime_broadcast':
 
@@ -592,8 +618,8 @@ class WLLDriver(weewx.drivers.AbstractDevice):
 
                         rain_this_period = rain_this_period / 2.54
 
-                    self.rain_previous_period = rainFall_Daily
-                    logdbg("Rain rightnow is :" + str(rain_this_period))
+                self.rain_previous_period = rainFall_Daily
+                logdbg("Rain rightnow is :" + str(rain_this_period))
 
             else:
 
@@ -638,6 +664,8 @@ class WLLDriver(weewx.drivers.AbstractDevice):
                    'inTemp':  inTemp,
                    'inHumidity':  inHumidity,
                    'inDewpoint' : inDewpoint,
+                   'UV' : UV,
+                   'radiation' : radiation,
                    }
 
             if self.udp_enable == 0:
