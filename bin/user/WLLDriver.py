@@ -401,8 +401,6 @@ class WLLDriver(weewx.drivers.AbstractDevice):
 
         else:
 
-            logdbg("Current data before calculated : {}".format(data))
-
             rain_this_period = 0
 
             for device_id, device in self.dict_device_id.items():
