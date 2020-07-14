@@ -587,6 +587,8 @@ class WLLDriver(weewx.drivers.AbstractDevice):
 
                 logdbg("rain_this_period before transformed is : {}".format(rain_this_period))
 
+                logdbg("rain_previous_period before transformed is : {}".format(self.rain_previous_period))
+
                 rain_this_period = (rainFall_Daily - self.rain_previous_period) * rainmultiplier
 
                 logdbg("rain_this_period after transformed is : {}".format(rain_this_period))
