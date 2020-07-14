@@ -395,9 +395,6 @@ class WLLDriver(weewx.drivers.AbstractDevice):
         inHumidity = None
         inDewpoint = None
 
-        self.update_packet = None
-        add_current_rain = None
-
         if type_of_packet == 'current_conditions' and data['data'] == None:
 
             raise Exception('No data in WLL packet')
@@ -481,7 +478,7 @@ class WLLDriver(weewx.drivers.AbstractDevice):
                                         
                                             windGustDir = s['wind_dir_scalar_avg_last_10_min']
 
-                                    if self.dict_device_id[device_id] == 'iss' or 'iss+':
+                                    if self.dict_device_id[device_id] == 'iss' or self.dict_device_id[device_id] == 'iss+':
 
                                         if 'rain_rate_last' in s and s['rain_rate_last'] is not None:
 
@@ -547,7 +544,6 @@ class WLLDriver(weewx.drivers.AbstractDevice):
 
                                         if self.dict_device_id[device_id] == 'iss' or self.dict_device_id[device_id] == 'iss+' or self.dict_device_id[device_id] == 'extra_RainGauge':
 
-
                                             if 'rain_rate_last' in s and s['rain_rate_last'] is not None:
 
                                                 rainRate = s['rain_rate_last']
@@ -581,17 +577,11 @@ class WLLDriver(weewx.drivers.AbstractDevice):
 
         if rainFall_Daily is not None:
 
-            logdbg("rainFall_Daily is : {}".format(rainFall_Daily)) 
+            logdbg("rainFall_Daily set is : {}".format(rainFall_Daily))
 
             if self.rain_previous_period is not None:
 
-                logdbg("rain_this_period before transformed is : {}".format(rain_this_period))
-
-                logdbg("rain_previous_period before transformed is : {}".format(self.rain_previous_period))
-
                 rain_this_period = (rainFall_Daily - self.rain_previous_period) * rainmultiplier
-
-                logdbg("rain_this_period after transformed is : {}".format(rain_this_period))
 
                 if rain_this_period > 0:
 
@@ -654,13 +644,11 @@ class WLLDriver(weewx.drivers.AbstractDevice):
 
             if self.udp_enable == 0:
 
+                add_current_rain = {'rain' : rain_this_period,
+                    'rainRate' : rainRate,
+                    }
+
                 if add_current_rain is not None:
-
-                    add_current_rain = {'rain' : rain_this_period,
-                        'rainRate' : rainRate,
-                        }
-
-                    logdbg("Rain packet is {}".format(add_current_rain))
 
                     self.update_packet.update(add_current_rain)
 
@@ -685,8 +673,6 @@ class WLLDriver(weewx.drivers.AbstractDevice):
                    'rain' : rain_this_period,
                    'rainRate' : rainRate,
                    }
-
-            logdbg("UDP packet is : {}".format(self.update_packet))
 
 
         if self.update_packet is not None:
