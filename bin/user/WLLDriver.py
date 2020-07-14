@@ -395,11 +395,15 @@ class WLLDriver(weewx.drivers.AbstractDevice):
         inHumidity = None
         inDewpoint = None
 
+        self.update_packet = None
+
         if type_of_packet == 'current_conditions' and data['data'] == None:
 
             raise Exception('No data in WLL packet')
 
         else:
+
+            logdbg(data)
 
             rain_this_period = 0
 
@@ -458,37 +462,39 @@ class WLLDriver(weewx.drivers.AbstractDevice):
 
                                             windchill = s['wind_chill']
 
-                                    if self.dict_device_id[device_id] == 'iss' or self.dict_device_id[device_id] == 'iss+' or self.dict_device_id[device_id] == 'extra_Anenometer':
+                                    if udp_enable == 0:
 
-                                        if 'wind_speed_last' in s:
+                                        if self.dict_device_id[device_id] == 'iss' or self.dict_device_id[device_id] == 'iss+' or self.dict_device_id[device_id] == 'extra_Anenometer':
 
-                                            windSpeed = s['wind_speed_last']
+                                            if 'wind_speed_last' in s:
 
-                                        if 'wind_dir_last' in s:
+                                                windSpeed = s['wind_speed_last']
 
-                                            windDir = s['wind_dir_last']
-                                        
-                                        if 'wind_speed_hi_last_10_min' in s:
+                                            if 'wind_dir_last' in s:
 
-                                            windGust = s['wind_speed_hi_last_10_min']
+                                                windDir = s['wind_dir_last']
+                                            
+                                            if 'wind_speed_hi_last_10_min' in s:
 
-                                        if 'wind_dir_scalar_avg_last_10_min' in s:
-                                        
-                                            windGustDir = s['wind_dir_scalar_avg_last_10_min']
+                                                windGust = s['wind_speed_hi_last_10_min']
 
-                                    if self.dict_device_id[device_id] == 'iss' or 'iss+':
+                                            if 'wind_dir_scalar_avg_last_10_min' in s:
+                                            
+                                                windGustDir = s['wind_dir_scalar_avg_last_10_min']
 
-                                        if 'rain_rate_last' in s and s['rain_rate_last'] is not None:
+                                        if self.dict_device_id[device_id] == 'iss' or 'iss+':
 
-                                            rainRate = s['rain_rate_last']
+                                            if 'rain_rate_last' in s and s['rain_rate_last'] is not None:
 
-                                        if 'rainfall_daily' in s and s['rainfall_daily'] is not None:
+                                                rainRate = s['rain_rate_last']
 
-                                            rainFall_Daily = s['rainfall_daily']
+                                            if 'rainfall_daily' in s and s['rainfall_daily'] is not None:
 
-                                        if 'rain_size' in s and s['rain_size'] is not None:
+                                                rainFall_Daily = s['rainfall_daily']
 
-                                            rainSize = s['rain_size']
+                                            if 'rain_size' in s and s['rain_size'] is not None:
+
+                                                rainSize = s['rain_size']
 
                             # Next lines are not extra, so no need ID
 
@@ -520,37 +526,39 @@ class WLLDriver(weewx.drivers.AbstractDevice):
 
                                 if s['txid'] == device_id:
 
-                                    if self.dict_device_id[device_id] == 'iss' or self.dict_device_id[device_id] == 'iss+' or self.dict_device_id[device_id] == 'extra_Anenometer':
+                                    if udp_enable == 1:
 
-                                        if 'wind_speed_last' in s:
+                                        if self.dict_device_id[device_id] == 'iss' or self.dict_device_id[device_id] == 'iss+' or self.dict_device_id[device_id] == 'extra_Anenometer':
 
-                                            windSpeed = s['wind_speed_last']
+                                            if 'wind_speed_last' in s:
 
-                                        if 'wind_dir_last' in s:
+                                                windSpeed = s['wind_speed_last']
 
-                                            windDir = s['wind_dir_last']
-                                        
-                                        if 'wind_speed_hi_last_10_min' in s:
+                                            if 'wind_dir_last' in s:
 
-                                            windGust = s['wind_speed_hi_last_10_min']
+                                                windDir = s['wind_dir_last']
+                                            
+                                            if 'wind_speed_hi_last_10_min' in s:
 
-                                        if 'wind_dir_at_hi_speed_last_10_min' in s:
-                                        
-                                            windGustDir = s['wind_dir_at_hi_speed_last_10_min']
+                                                windGust = s['wind_speed_hi_last_10_min']
 
-                                    if self.dict_device_id[device_id] == 'iss' or self.dict_device_id[device_id] == 'iss+' or self.dict_device_id[device_id] == 'extra_RainGauge':
+                                            if 'wind_dir_at_hi_speed_last_10_min' in s:
+                                            
+                                                windGustDir = s['wind_dir_at_hi_speed_last_10_min']
 
-                                        if 'rain_rate_last' in s and s['rain_rate_last'] is not None:
+                                        if self.dict_device_id[device_id] == 'iss' or self.dict_device_id[device_id] == 'iss+' or self.dict_device_id[device_id] == 'extra_RainGauge':
 
-                                            rainRate = s['rain_rate_last']
+                                            if 'rain_rate_last' in s and s['rain_rate_last'] is not None:
 
-                                        if 'rainfall_daily' in s and s['rainfall_daily'] is not None:
+                                                rainRate = s['rain_rate_last']
 
-                                            rainFall_Daily = s['rainfall_daily']
+                                            if 'rainfall_daily' in s and s['rainfall_daily'] is not None:
 
-                                        if 'rain_size' in s and s['rain_size'] is not None:
+                                                rainFall_Daily = s['rainfall_daily']
 
-                                            rainSize = s['rain_size']
+                                            if 'rain_size' in s and s['rain_size'] is not None:
+
+                                                rainSize = s['rain_size']
 
 
                     length_dict_device_id_count += 1
