@@ -88,7 +88,7 @@ class WLLDriver(weewx.drivers.AbstractDevice):
         # Define URL for current conditions and udp broadcast
 
         self.url_current_conditions = "http://{}/v1/current_conditions".format(self.hostname)
-        self.url_realtime_broadcast = "http://{}/v1/real_time?duration=36000".format(self.hostname)
+        self.url_realtime_broadcast = "http://{}/v1/real_time?duration=3600".format(self.hostname)
 
         # Define values for driver work
 
