@@ -14,7 +14,6 @@ import socket
 import urllib.request
 import sys
 import time
-import mysql.connector
 import weewx.drivers
 import weewx.engine
 import weewx.units
