@@ -18,6 +18,7 @@ default API request is : https://api.weatherlink.com/v2/stations?api-key=YOURAPI
     hostname - #Set your IP or hostname of WLL module.
     time_out - #Set this for timeout in second of HTTP and UDP request. Default : 10
     device_id - #Set the ID of your ISS that you've configured on the WLL Module. Ex : 1:iss-10:extraTemp1. Default : 1:iss. Be carefull for extra sensor because the column would be exist in Weewx database
+    wind_gust_2m_enable - #Set this if you want to have wind gust refresh each 2min instead of 10min default. Don't use this if you have udp enabled. Default : 0
     wl_apikey - #Create an API Key on your Weatherlink account
     wl_apisecret - #By creating API Key, you've also need an API Secret
     wl_stationid - #Check your station ID by using the method explain before

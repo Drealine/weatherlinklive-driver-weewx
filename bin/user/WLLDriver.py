@@ -77,6 +77,7 @@ class WLLDriver(weewx.drivers.AbstractDevice):
         self.retry_wait = int(stn_dict.get('retry_wait', 10))
         self.poll_interval = float(stn_dict.get('poll_interval', 10))
         self.udp_enable = int(stn_dict.get('udp_enable',0))
+        self.wind_gust_2m_enable = int(stn_dict.get('wind_gust_2m_enable',0))
         self.hostname = (stn_dict.get('hostname', "127.0.0.1"))
         self.wl_apikey = (stn_dict.get('wl_apikey', "ABCABC"))
         self.wl_apisecret = (stn_dict.get('wl_apisecret', "ABCABC"))
@@ -481,14 +482,26 @@ class WLLDriver(weewx.drivers.AbstractDevice):
                                         if 'wind_dir_last' in s:
 
                                             windDir = s['wind_dir_last']
-                                        
-                                        if 'wind_speed_hi_last_10_min' in s:
 
-                                            windGust = s['wind_speed_hi_last_10_min']
-
-                                        if 'wind_dir_scalar_avg_last_10_min' in s:
+                                        if self.wind_gust_2m_enable == 0:
                                         
-                                            windGustDir = s['wind_dir_scalar_avg_last_10_min']
+                                            if 'wind_speed_hi_last_10_min' in s:
+
+                                                windGust = s['wind_speed_hi_last_10_min']
+
+                                            if 'wind_dir_at_hi_speed_last_10_min' in s:
+                                            
+                                                windGustDir = s['wind_dir_at_hi_speed_last_10_min']
+
+                                        if self.wind_gust_2m_enable == 1:
+                                        
+                                            if 'wind_speed_hi_last_2_min' in s:
+
+                                                windGust = s['wind_speed_hi_last_2_min']
+
+                                            if 'wind_dir_at_hi_speed_last_2_min' in s:
+                                            
+                                                windGustDir = s['wind_dir_at_hi_speed_last_2_min']
 
                                     if self.dict_device_id[device_id] == 'iss' or self.dict_device_id[device_id] == 'iss+':
 
