@@ -700,6 +700,8 @@ class WLLDriver(weewx.drivers.AbstractDevice):
 
                     self.update_packet.update(extraHumid)
 
+            logdbg("Current conditions packet received {}".format(self.update_packet))
+
         elif type_of_packet == 'realtime_broadcast':
 
             self.update_packet = {'dateTime': datetime,
@@ -711,6 +713,8 @@ class WLLDriver(weewx.drivers.AbstractDevice):
                    'rain' : rain_this_period,
                    'rainRate' : rainRate,
                    }
+
+            logdbg("UDP packet received {}".format(self.update_packet))
 
 
         if self.update_packet is not None:
