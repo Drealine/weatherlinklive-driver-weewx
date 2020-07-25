@@ -270,7 +270,7 @@ class WLLDriver(weewx.drivers.AbstractDevice):
 
                                                             rain = s['rainfall_in']
 
-                                                    elif rainSize == 2:
+                                                    if rainSize == 2:
 
                                                         if 'rain_rate_hi_mm' in s:
                
@@ -292,7 +292,7 @@ class WLLDriver(weewx.drivers.AbstractDevice):
 
                                                                     rain = rain / 25.4
 
-                                                    #elif rainSize == 3:
+                                                    #if rainSize == 3:
 
                                                         # What about this value ? Is not implement on weatherlink.com ?
 
@@ -443,7 +443,7 @@ class WLLDriver(weewx.drivers.AbstractDevice):
                                 
                                                 outTemp = s['temp']
 
-                                            elif self.dict_device_id[device_id] in 'extraTemp{}'.format(length_dict_device_id_count):
+                                            if self.dict_device_id[device_id] in 'extraTemp{}'.format(length_dict_device_id_count):
 
                                                 extraTemp['extraTemp{}'.format(length_dict_device_id_count)] = s['temp']
 
@@ -455,7 +455,7 @@ class WLLDriver(weewx.drivers.AbstractDevice):
                                 
                                                 outHumidity = s['hum']
 
-                                            elif self.dict_device_id[device_id] == 'extraHumid{}'.format(length_dict_device_id_count):
+                                            if self.dict_device_id[device_id] == 'extraHumid{}'.format(length_dict_device_id_count):
 
                                                 extraHumid['extraHumid{}'.format(length_dict_device_id_count)] = s['hum']
 
@@ -529,17 +529,17 @@ class WLLDriver(weewx.drivers.AbstractDevice):
 
                             # Next lines are not extra, so no need ID
 
-                            elif s['data_structure_type'] == 2 :
+                            if s['data_structure_type'] == 2 :
 
                                 pass
 
-                            elif s['data_structure_type'] == 3 :
+                            if s['data_structure_type'] == 3 :
 
                                 barometer = s['bar_sea_level']
 
                                 pressure = s['bar_absolute']
 
-                            elif s['data_structure_type'] == 4 :
+                            if s['data_structure_type'] == 4 :
 
                                 inTemp = s['temp_in']
 
@@ -548,7 +548,7 @@ class WLLDriver(weewx.drivers.AbstractDevice):
                                 inDewpoint = s['dew_point_in']
 
 
-                    elif type_of_packet == 'realtime_broadcast':
+                    if type_of_packet == 'realtime_broadcast':
 
                         datetime = data['ts']
 
@@ -602,11 +602,11 @@ class WLLDriver(weewx.drivers.AbstractDevice):
 
                 rainmultiplier = 0.01
 
-            elif rainSize == 2:
+            if rainSize == 2:
 
                 rainmultiplier = 0.2
 
-            elif rainSize == 3:
+            if rainSize == 3:
 
                 rainmultiplier = 0.1
 
@@ -702,7 +702,7 @@ class WLLDriver(weewx.drivers.AbstractDevice):
 
             logdbg("Current conditions packet received {}".format(self.update_packet))
 
-        elif type_of_packet == 'realtime_broadcast':
+        if type_of_packet == 'realtime_broadcast':
 
             self.update_packet = {'dateTime': datetime,
                    'usUnits': weewx.US,
