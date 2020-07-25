@@ -680,15 +680,15 @@ class WLLDriver(weewx.drivers.AbstractDevice):
                    'radiation' : radiation,
                    }
 
-            if self.udp_enable == 0:
+            #if self.udp_enable == 0:
 
-                add_current_rain = {'rain' : rain_this_period,
-                    'rainRate' : rainRate,
-                    }
+            add_current_rain = {'rain' : rain_this_period,
+                'rainRate' : rainRate,
+                }
 
-                if add_current_rain is not None:
+            if add_current_rain is not None:
 
-                    self.update_packet.update(add_current_rain)
+                self.update_packet.update(add_current_rain)
 
             if length_dict_device_id_count > 1:
 
