@@ -526,16 +526,23 @@ class WLLDriver(weewx.drivers.AbstractDevice):
                                 pass
 
                             if s['data_structure_type'] == 3:
-                                barometer = s['bar_sea_level']
 
-                                pressure = s['bar_absolute']
+                                if 'bar_sea_level' in s and s['bar_sea_level'] is not None:
+                                    barometer = s['bar_sea_level']
+
+                                if 'bar_absolute' in s and s['bar_absolute'] is not None:
+                                    pressure = s['bar_absolute']
 
                             if s['data_structure_type'] == 4:
-                                inTemp = s['temp_in']
 
-                                inHumidity = s['hum_in']
+                                if 'temp_in' in s and s['temp_in'] is not None:
+                                    inTemp = s['temp_in']
 
-                                inDewpoint = s['dew_point_in']
+                                if 'hum_in' in s and s['hum_in'] is not None:
+                                    inHumidity = s['hum_in']
+
+                                if 'dew_point_in' in s and s['dew_point_in'] is not None:
+                                    inDewpoint = s['dew_point_in']
 
                     if type_of_packet == 'realtime_broadcast':
 
