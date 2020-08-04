@@ -33,21 +33,35 @@ try:
     import logging
 
     log = logging.getLogger(__name__)
+
+
     def logdbg(msg):
         log.debug(msg)
+
+
     def loginf(msg):
         log.info(msg)
+
+
     def logerr(msg):
         log.error(msg)
 
 except ImportError:
     import syslog
+
+
     def logmsg(level, msg):
         syslog.syslog(level, 'WLLDriver: %s:' % msg)
+
+
     def logdbg(msg):
         logmsg(syslog.LOG_DEBUG, msg)
+
+
     def loginf(msg):
         logmsg(syslog.LOG_INFO, msg)
+
+
     def logerr(msg):
         logmsg(syslog.LOG_ERR, msg)
 
@@ -63,10 +77,12 @@ class WLLDriverAPI():
                                  'extraHumid': {55},
                                  }
 
+        self.matches_sensor_type = ('iss', 'iss+', 'extraTemp', 'extraHumid')
+
         # Define values for driver work
 
         self.api_parameters = api_parameters
-        #comsocket.settimeout(self.api_parameters['time_out'])
+        # comsocket.settimeout(self.api_parameters['time_out'])
         device_id = self.api_parameters['device_id']
         self.rain_previous_period = None
         self.udp_countdown = 0
@@ -140,10 +156,9 @@ class WLLDriverAPI():
 
         # Get the last timestamp of Weatherlink archive interval set in conf driver
 
-        wl_archive_interval = int(self.api_parameters['wl_archive_interval'])
-
         timestamp_wl_archive = int(
-            math.floor((time.time() - 60) / (wl_archive_interval * 60)) * (wl_archive_interval * 60))
+            math.floor((time.time() - 60) / (self.api_parameters['wl_archive_interval'] * 60)) *
+            (self.api_parameters['wl_archive_interval'] * 60))
 
         return timestamp_wl_archive
 
@@ -151,10 +166,9 @@ class WLLDriverAPI():
 
         # Get timestamp from specific time of Weatherlink archive interval set in conf driver
 
-        wl_archive_interval = int(self.api_parameters['wl_archive_interval'])
-
         timestamp_wl_archive = int(
-            math.floor((timestamp - 60) / (wl_archive_interval * 60)) * (wl_archive_interval * 60))
+            math.floor((timestamp - 60) / (self.api_parameters['wl_archive_interval'] * 60)) *
+            (self.api_parameters['wl_archive_interval'] * 60))
 
         return timestamp_wl_archive
 
@@ -225,21 +239,15 @@ class WLLDriverAPI():
             extraTemp = {}
             extraHumid = {}
             start_timestamp = int(start_timestamp + (60 * int(self.api_parameters['wl_archive_interval'])))
-            length_json_temp = len(data_wl['sensors'])
 
             while start_timestamp <= end_timestamp:
                 logdbg("Request archive from {} to {}".format(start_timestamp, end_timestamp))
-                length_json_count = 0
-                length_json = length_json_temp - 1
-                length_dict_device_id_count = 1
-                length_dict_device_id = self.length_dict_device_id
                 wl_packet = copy.copy(self.schema_wl_packet)
 
-                logdbg("Schema before put data {}".format(wl_packet))
-                logdbg("Schema {}".format(self.schema_wl_packet))
-
-                while length_dict_device_id_count <= length_dict_device_id:
-                    while length_json_count <= length_json:
+                for nmb_device_id in range(1, len(self.dict_device_id) + 1, 1):
+                    logdbg("nmb {}".format(nmb_device_id))
+                    for index_json in range(0, len(data_wl['sensors']), 1):
+                        logdbg("index {}".format(index_json))
                         for device_id, device in self.dict_device_id.items():
                             temp_dict_device_id = self.dict_device_id[device_id]
                             temp_dict_device_id = ''.join([i for i in temp_dict_device_id if not i.isdigit()])
@@ -247,87 +255,77 @@ class WLLDriverAPI():
                             for sensor_type_id in self.dict_sensor_type[temp_dict_device_id]:
                                 for s in data_wl['sensors']:
                                     if s['sensor_type'] == sensor_type_id:
-                                        for s in data_wl['sensors'][length_json_count]['data']:
-                                            if 'tx_id' in s and s['tx_id'] == device_id:
-                                                if s['ts'] == start_timestamp:
-                                                    if self.dict_device_id[device_id] == 'iss' or self.dict_device_id[
-                                                        device_id] == 'iss+' or self.dict_device_id[
-                                                        device_id] in 'extraTemp{}'.format(length_dict_device_id_count):
-                                                        if 'temp_last' in s:
-                                                            if self.dict_device_id[device_id] == 'iss' or \
-                                                                    self.dict_device_id[device_id] == 'iss+':
-                                                                wl_packet['outTemp'] = s['temp_last']
+                                        for s in data_wl['sensors'][index_json]['data']:
+                                            if 'tx_id' in s and s['tx_id'] == device_id and s['ts'] == start_timestamp:
+                                                if 'temp_last' in s:
+                                                    if self.dict_device_id[device_id] == 'iss' or \
+                                                            self.dict_device_id[device_id] == 'iss+':
+                                                        wl_packet['outTemp'] = s['temp_last']
 
-                                                            if self.dict_device_id[device_id] in 'extraTemp{}'.format(
-                                                                    length_dict_device_id_count):
-                                                                extraTemp[
-                                                                    'extraTemp{}'.format(length_dict_device_id_count)] = \
-                                                                    s[
-                                                                        'temp_last']
+                                                    if self.dict_device_id[device_id] in 'extraTemp{}'.format(
+                                                            nmb_device_id):
+                                                        extraTemp[
+                                                            'extraTemp{}'.format(nmb_device_id)] = \
+                                                            s['temp_last']
 
-                                                    if self.dict_device_id[device_id] == 'iss' or self.dict_device_id[
-                                                        device_id] == 'iss+' or 'extraHumid{}'.format(
-                                                        length_dict_device_id_count):
-                                                        if 'hum_last' in s:
-                                                            if self.dict_device_id[device_id] == 'iss' or \
-                                                                    self.dict_device_id[device_id] == 'iss+':
-                                                                wl_packet['outHumidity'] = s['hum_last']
+                                                if 'hum_last' in s:
+                                                    if self.dict_device_id[device_id] == 'iss' or \
+                                                            self.dict_device_id[device_id] == 'iss+':
+                                                        wl_packet['outHumidity'] = s['hum_last']
 
-                                                            if self.dict_device_id[device_id] == 'extraHumid{}'.format(
-                                                                    length_dict_device_id_count):
-                                                                extraHumid[
-                                                                    'extraHumid{}'.format(
-                                                                        length_dict_device_id_count)] = s[
-                                                                    'hum_last']
-                                                    if 'dew_point_last' in s:
-                                                        wl_packet['dewpoint'] = s['dew_point_last']
-                                                        logdbg("je suis là")
-                                                    if 'rain_size' in s:
-                                                        rainSize = s['rain_size']
-                                                    if 'heat_index_last' in s:
-                                                        wl_packet['heatindex'] = s['heat_index_last']
-                                                    if 'wind_chill_last' in s:
-                                                        wl_packet['windchill'] = s['wind_chill_last']
-                                                    if 'wind_speed_avg' in s:
-                                                        wl_packet['windSpeed'] = s['wind_speed_avg']
-                                                    if 'wind_dir_of_prevail' in s:
-                                                        wl_packet['windDir'] = s['wind_dir_of_prevail']
-                                                    if 'wind_speed_hi' in s:
-                                                        wl_packet['windGust'] = s['wind_speed_hi']
-                                                    if 'wind_speed_hi_dir' in s:
-                                                        wl_packet['windGustDir'] = s['wind_speed_hi_dir']
-                                                    if 'uv_index_avg' in s:
-                                                        wl_packet['UV'] = s['uv_index_avg']
-                                                    if 'solar_rad_avg' in s:
-                                                        wl_packet['radiation'] = s['solar_rad_avg']
+                                                    if self.dict_device_id[device_id] == 'extraHumid{}'.format(
+                                                            nmb_device_id):
+                                                        extraHumid[
+                                                            'extraHumid{}'.format(
+                                                                nmb_device_id)] = s['hum_last']
+                                                if 'dew_point_last' in s:
+                                                    wl_packet['dewpoint'] = s['dew_point_last']
+                                                if 'rain_size' in s:
+                                                    rainSize = s['rain_size']
+                                                if 'heat_index_last' in s:
+                                                    wl_packet['heatindex'] = s['heat_index_last']
+                                                if 'wind_chill_last' in s:
+                                                    wl_packet['windchill'] = s['wind_chill_last']
+                                                if 'wind_speed_avg' in s:
+                                                    wl_packet['windSpeed'] = s['wind_speed_avg']
+                                                if 'wind_dir_of_prevail' in s:
+                                                    wl_packet['windDir'] = s['wind_dir_of_prevail']
+                                                if 'wind_speed_hi' in s:
+                                                    wl_packet['windGust'] = s['wind_speed_hi']
+                                                if 'wind_speed_hi_dir' in s:
+                                                    wl_packet['windGustDir'] = s['wind_speed_hi_dir']
+                                                if 'uv_index_avg' in s:
+                                                    wl_packet['UV'] = s['uv_index_avg']
+                                                if 'solar_rad_avg' in s:
+                                                    wl_packet['radiation'] = s['solar_rad_avg']
 
-                                                    if rainSize == 1:
-                                                        if 'rain_rate_hi_in' in s:
-                                                            wl_packet['rainRate'] = s['rain_rate_hi_in']
+                                                if rainSize == 1:
+                                                    if 'rain_rate_hi_in' in s:
+                                                        wl_packet['rainRate'] = s['rain_rate_hi_in']
 
-                                                        if 'rainfall_in' in s:
-                                                            wl_packet['rain'] = s['rainfall_in']
+                                                    if 'rainfall_in' in s:
+                                                        wl_packet['rain'] = s['rainfall_in']
 
-                                                    if rainSize == 2:
-                                                        if 'rain_rate_hi_mm' in s:
-                                                            rainRate = s['rain_rate_hi_mm']
+                                                if rainSize == 2:
+                                                    if 'rain_rate_hi_mm' in s:
+                                                        rainRate = s['rain_rate_hi_mm']
 
-                                                            if rainRate is not None:
-                                                                wl_packet['rainRate'] = rainRate / 25.4
+                                                        if rainRate is not None:
+                                                            wl_packet['rainRate'] = rainRate / 25.4
 
-                                                        if 'rainfall_mm' in s:
-                                                            rain = s['rainfall_mm']
+                                                    if 'rainfall_mm' in s:
+                                                        rain = s['rainfall_mm']
 
-                                                            if rain is not None:
-                                                                wl_packet['rain'] = rain / 25.4
+                                                        if rain is not None:
+                                                            wl_packet['rain'] = rain / 25.4
 
-                                                    # if rainSize == 3:
+                                                # if rainSize == 3:
 
-                                                    # What about this value ? Is not implement on weatherlink.com ?
+                                                # What about this value ? Is not implement on weatherlink.com ?
 
                                 for s in data_wl['sensors']:
                                     if s['sensor_type'] == 242:
-                                        for s in data_wl['sensors'][length_json_count]['data']:
+                                        for s in data_wl['sensors'][index_json]['data']:
                                             if s['ts'] == start_timestamp:
                                                 if 'bar_sea_level' in s:
                                                     wl_packet['barometer'] = s['bar_sea_level']
@@ -336,7 +334,7 @@ class WLLDriverAPI():
 
                                 for s in data_wl['sensors']:
                                     if s['sensor_type'] == 243:
-                                        for s in data_wl['sensors'][length_json_count]['data']:
+                                        for s in data_wl['sensors'][index_json]['data']:
                                             if s['ts'] == start_timestamp:
                                                 if 'temp_in_last' in s:
                                                     wl_packet['inTemp'] = s['temp_in_last']
@@ -345,13 +343,9 @@ class WLLDriverAPI():
                                                 if 'dew_point_in' in s:
                                                     wl_packet['inDewpoint'] = s['dew_point_in']
 
-                        length_json_count += 1
-
-                    length_dict_device_id_count += 1
-
                 wl_packet['dateTime'] = start_timestamp
 
-                if length_dict_device_id_count > 1:
+                if len(self.dict_device_id) > 1:
                     if extraTemp is not None:
                         wl_packet.update(extraTemp)
 
@@ -385,44 +379,38 @@ class WLLDriverAPI():
             extraHumid = {}
             add_current_rain = None
             _packet = None
+            rainFall_Daily = None
             wll_packet = copy.copy(self.schema_wll_packet)
             udp_wll_packet = copy.copy(self.schema_udp_wll_packet)
-            rain_this_period = 0
 
             for device_id, device in self.dict_device_id.items():
-                length_dict_device_id_count = 1
-                length_dict_device_id = self.length_dict_device_id
-
-                while length_dict_device_id_count <= length_dict_device_id:
+                for nmb_device_id in range(1, len(self.dict_device_id) + 1, 1):
                     if type_of_packet == 'current_conditions':
-                        wll_packet['dateTime'] = data['data']['ts']
+                        logdbg('Data current_conditions from WLL before {}:'.format(data))
+                        if 'ts' in data['data']:
+                            wll_packet['dateTime'] = data['data']['ts']
 
                         for s in data['data']['conditions']:
                             if s['data_structure_type'] == 1:
                                 if s['txid'] == device_id:
-                                    if self.dict_device_id[device_id] == 'iss' or self.dict_device_id[
-                                        device_id] == 'iss+' or self.dict_device_id[device_id] in 'extraTemp{}'.format(
-                                        length_dict_device_id_count):
-                                        if 'temp' in s:
-                                            if self.dict_device_id[device_id] == 'iss' or self.dict_device_id[
-                                                device_id] == 'iss+':
-                                                wll_packet['outTemp'] = s['temp']
+                                    if 'temp' in s:
+                                        if self.dict_device_id[device_id] == 'iss' or self.dict_device_id[
+                                            device_id] == 'iss+':
+                                            wll_packet['outTemp'] = s['temp']
 
-                                            if self.dict_device_id[device_id] in 'extraTemp{}'.format(
-                                                    length_dict_device_id_count):
-                                                extraTemp['extraTemp{}'.format(length_dict_device_id_count)] = s['temp']
+                                        if self.dict_device_id[device_id] in 'extraTemp{}'.format(
+                                                nmb_device_id):
+                                            extraTemp['extraTemp{}'.format(nmb_device_id)] = s['temp']
 
-                                    if self.dict_device_id[device_id] == 'iss' or self.dict_device_id[
-                                        device_id] == 'iss+' or 'extraHumid{}'.format(length_dict_device_id_count):
-                                        if 'hum' in s:
-                                            if self.dict_device_id[device_id] == 'iss' or self.dict_device_id[
-                                                device_id] == 'iss+':
-                                                wll_packet['outHumidity'] = s['hum']
+                                    if 'hum' in s:
+                                        if self.dict_device_id[device_id] == 'iss' or self.dict_device_id[
+                                            device_id] == 'iss+':
+                                            wll_packet['outHumidity'] = s['hum']
 
-                                            if self.dict_device_id[device_id] == 'extraHumid{}'.format(
-                                                    length_dict_device_id_count):
-                                                extraHumid['extraHumid{}'.format(length_dict_device_id_count)] = s[
-                                                    'hum']
+                                        if self.dict_device_id[device_id] == 'extraHumid{}'.format(
+                                                nmb_device_id):
+                                            extraHumid['extraHumid{}'.format(nmb_device_id)] = s[
+                                                'hum']
 
                                     if self.dict_device_id[device_id] == 'iss' or self.dict_device_id[
                                         device_id] == 'iss+':
@@ -488,7 +476,9 @@ class WLLDriverAPI():
                                     wll_packet['inDewpoint'] = s['dew_point_in']
 
                     if type_of_packet == 'realtime_broadcast':
-                        udp_wll_packet['dateTime'] = data['ts']
+                        logdbg('Data realtime_broadcast from WLL before {}:'.format(data))
+                        if 'ts' in data:
+                            udp_wll_packet['dateTime'] = data['ts']
 
                         for s in data['conditions']:
                             if s['data_structure_type'] == 1:
@@ -515,16 +505,15 @@ class WLLDriverAPI():
                                             if 'rain_size' in s:
                                                 rainSize = s['rain_size']
 
-                    length_dict_device_id_count += 1
-
             logdbg("rainFall_Daily set is : {}".format(rainFall_Daily))
 
             if self.rain_previous_period is not None:
                 rain, rainRate = self.calculate_rain(rainFall_Daily, rainRate, rainSize)
 
-                add_current_rain = {'rain': rain,
-                                    'rainRate': rainRate,
-                                    }
+                if rain is not None and rainRate is not None:
+                    add_current_rain = {'rain': rain,
+                                        'rainRate': rainRate,
+                                        }
                 if rainFall_Daily >= 0 and rainFall_Daily is not None:
                     self.rain_previous_period = rainFall_Daily
 
@@ -532,9 +521,10 @@ class WLLDriverAPI():
                 logdbg("rainRate rightnow is : {}".format(rainRate))
 
             else:
-                if rainFall_Daily >= 0 and rainFall_Daily is not None:
-                    self.rain_previous_period = rainFall_Daily
-                    logdbg("Rainfall set by WLLDriver")
+                if rainFall_Daily is not None:
+                    if rainFall_Daily >= 0:
+                        self.rain_previous_period = rainFall_Daily
+                        logdbg("Rainfall set by WLLDriver")
 
             logdbg("Set previous period rain to: " + str(self.rain_previous_period))
 
@@ -542,7 +532,7 @@ class WLLDriverAPI():
                 if add_current_rain is not None:
                     wll_packet.update(add_current_rain)
 
-                if length_dict_device_id_count > 1:
+                if len(self.dict_device_id) > 1:
                     if extraTemp is not None:
                         wll_packet.update(extraTemp)
 
@@ -554,10 +544,6 @@ class WLLDriverAPI():
                 logdbg("Current conditions packet received {}".format(_packet))
 
             if type_of_packet == 'realtime_broadcast':
-                add_current_rain = {'rain': rain,
-                                    'rainRate': rainRate,
-                                    }
-
                 if add_current_rain is not None:
                     udp_wll_packet.update(add_current_rain)
 
@@ -573,7 +559,7 @@ class WLLDriverAPI():
                 raise weewx.WeeWxIOError('No data in WLL packet but request is OK')
 
         except KeyError as error:
-            raise weewx.WeeWxIOError('API Data from Weatherlink is invalid. Error is : {}'.format(error))
+            raise weewx.WeeWxIOError('API Data from WLL Module is invalid. Error is : {}'.format(error))
         except IndexError as error:
             raise weewx.WeeWxIOError('Structure type is not valid. Error is : {}'.format(error))
 
@@ -646,12 +632,22 @@ class WLLDriverAPI():
 
     def request_wll(self, type_of_packet):
 
-        wll_packet = self.request_json_data(self.url_current_conditions, self.api_parameters['time_out'],
-                                            type_of_packet)
+        if type_of_packet == 'current_conditions':
 
-        for _packet in self.data_decode_wll(wll_packet, type_of_packet):
-            if _packet is not None:
-                yield _packet
+            wll_packet = self.request_json_data(self.url_current_conditions, self.api_parameters['time_out'],
+                                                type_of_packet)
+
+            for _packet in self.data_decode_wll(wll_packet, type_of_packet):
+                if _packet is not None:
+                    yield _packet
+
+        if type_of_packet == 'realtime_broadcast':
+            data_broadcast = self.get_realtime_broadcast()
+
+            if data_broadcast is not None:
+                for _packet in self.data_decode_wll(data_broadcast, type_of_packet):
+                    if _packet is not None:
+                        yield _packet
 
     def request_realtime_broadcast(self):
 
@@ -787,13 +783,9 @@ class WLLDriver(weewx.drivers.AbstractDevice):
                     self.WLLDriverAPI.request_realtime_broadcast()
 
                     while time.time() < timeout_udp_broadcast:
-                        realtime_data = self.WLLDriverAPI.get_realtime_broadcast()
-
-                        if realtime_data is not None:
-                            for _realtime_packet in self.WLLDriverAPI.data_decode_wll(realtime_data,
-                                                                                      'realtime_broadcast'):
-                                yield _realtime_packet
-                                self.ntries = 1
+                        for _realtime_packet in self.WLLDriverAPI.request_wll('realtime_broadcast'):
+                            yield _realtime_packet
+                            self.ntries = 1
 
             except weewx.WeeWxIOError as e:
                 logerr("Failed attempt %d of %d to get loop data: %s" %
