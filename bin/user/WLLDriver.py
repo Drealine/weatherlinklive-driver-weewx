@@ -33,16 +33,10 @@ try:
     import logging
 
     log = logging.getLogger(__name__)
-
-
     def logdbg(msg):
         log.debug(msg)
-
-
     def loginf(msg):
         log.info(msg)
-
-
     def logerr(msg):
         log.error(msg)
 
@@ -52,16 +46,10 @@ except ImportError:
 
     def logmsg(level, msg):
         syslog.syslog(level, 'WLLDriver: %s:' % msg)
-
-
     def logdbg(msg):
         logmsg(syslog.LOG_DEBUG, msg)
-
-
     def loginf(msg):
         logmsg(syslog.LOG_INFO, msg)
-
-
     def logerr(msg):
         logmsg(syslog.LOG_ERR, msg)
 
@@ -100,56 +88,14 @@ class WLLDriverAPI():
         self.schema_wl_packet = {'dateTime': None,
                                  'usUnits': weewx.US,
                                  'interval': self.api_parameters['wl_archive_interval'],
-                                 'outTemp': None,
-                                 'outHumidity': None,
-                                 'dewpoint': None,
-                                 'heatindex': None,
-                                 'windchill': None,
-                                 'windSpeed': None,
-                                 'windDir': None,
-                                 'windGust': None,
-                                 'windGustDir': None,
-                                 'barometer': None,
-                                 'pressure': None,
-                                 'rain': None,
-                                 'rainRate': None,
-                                 'inTemp': None,
-                                 'inHumidity': None,
-                                 'inDewpoint': None,
-                                 'UV': None,
-                                 'radiation': None,
                                  }
 
         self.schema_wll_packet = {'dateTime': None,
                                   'usUnits': weewx.US,
-                                  'outTemp': None,
-                                  'outHumidity': None,
-                                  'dewpoint': None,
-                                  'heatindex': None,
-                                  'windchill': None,
-                                  'windSpeed': None,
-                                  'windDir': None,
-                                  'windGust': None,
-                                  'windGustDir': None,
-                                  'barometer': None,
-                                  'pressure': None,
-                                  'rain': None,
-                                  'rainRate': None,
-                                  'inTemp': None,
-                                  'inHumidity': None,
-                                  'inDewpoint': None,
-                                  'UV': None,
-                                  'radiation': None,
                                   }
 
         self.schema_udp_wll_packet = {'dateTime': None,
                                       'usUnits': weewx.US,
-                                      'windSpeed': None,
-                                      'windDir': None,
-                                      'windGust': None,
-                                      'windGustDir': None,
-                                      'rain': None,
-                                      'rainRate': None,
                                       }
 
     def get_timestamp_wl_archive(self):
@@ -205,14 +151,20 @@ class WLLDriverAPI():
 
             # Calculate rain
             if self.rain_previous_period is not None and rainFall_Daily is not None:
-                rain = (rainFall_Daily - self.rain_previous_period) * rain_multiplier
+                if (rainFall_Daily - self.rain_previous_period) < 0:
+                    logdbg("rainFall_Daily not be a negative number, so set to 0")
+                    self.rain_previous_period = 0
+                else:
+                    rain = (rainFall_Daily - self.rain_previous_period) * rain_multiplier
 
                 if rain > 0:
                     if rainSize == 2:
                         rain = rain / 25.4
+                        logdbg("Convert rain to mm : {}".format(rain))
 
                     if rainSize == 3:
                         rain = rain / 2.54
+                        logdbg("Convert rain to cm : {}".format(rain))
 
             # Calculate rainRate
             if rainRate is not None:
@@ -221,12 +173,18 @@ class WLLDriverAPI():
 
                     if rainSize == 2:
                         rainRate = rainRate / 25.4
+                        logdbg("Convert rainRate to mm : {}".format(rainRate))
 
                     if rainSize == 3:
                         rainRate = rainRate / 2.54
+                        logdbg("Convert rainRate to cm : {}".format(rainRate))
         else:
             rain = None
             rainRate = None
+
+        if rainFall_Daily is not None and rainFall_Daily >= 0:
+            self.rain_previous_period = rainFall_Daily
+            logdbg("Rainfall_Daily set after calculated : {}".format(self.rain_previous_period))
 
         return rain, rainRate
 
@@ -235,19 +193,25 @@ class WLLDriverAPI():
         # Function to decode data from Weatherlink.com
 
         try:
+            # Copie json data to new value
             data_wl = data
+
+            # Set dict
             extraTemp = {}
             extraHumid = {}
+
+            # Set values to None
+            rainSize = None
+
+            # Calculate timestamp from start
             start_timestamp = int(start_timestamp + (60 * int(self.api_parameters['wl_archive_interval'])))
 
             while start_timestamp <= end_timestamp:
-                logdbg("Request archive from {} to {}".format(start_timestamp, end_timestamp))
+                logdbg("Request archive for timestamp : {}".format(start_timestamp))
                 wl_packet = copy.copy(self.schema_wl_packet)
 
                 for nmb_device_id in range(1, len(self.dict_device_id) + 1, 1):
-                    logdbg("nmb {}".format(nmb_device_id))
                     for index_json in range(0, len(data_wl['sensors']), 1):
-                        logdbg("index {}".format(index_json))
                         for device_id, device in self.dict_device_id.items():
                             temp_dict_device_id = self.dict_device_id[device_id]
                             temp_dict_device_id = ''.join([i for i in temp_dict_device_id if not i.isdigit()])
@@ -353,7 +317,7 @@ class WLLDriverAPI():
                         wl_packet.update(extraHumid)
 
                 if wl_packet is not None:
-                    logdbg("Packet received from Weatherlink.com :{}".format(wl_packet))
+                    logdbg("Packet received from Weatherlink.com : {}".format(wl_packet))
                     start_timestamp = int(start_timestamp + (60 * int(self.api_parameters['wl_archive_interval'])))
                     yield wl_packet
 
@@ -375,18 +339,26 @@ class WLLDriverAPI():
 
         try:
             # global rainFall_Daily
+
+            # Set dict
             extraTemp = {}
             extraHumid = {}
+
+            # Set values to None
             add_current_rain = None
             _packet = None
             rainFall_Daily = None
+            rainRate = None
+            rainSize = None
+
+            # Copy schema to new value
             wll_packet = copy.copy(self.schema_wll_packet)
             udp_wll_packet = copy.copy(self.schema_udp_wll_packet)
 
             for device_id, device in self.dict_device_id.items():
                 for nmb_device_id in range(1, len(self.dict_device_id) + 1, 1):
                     if type_of_packet == 'current_conditions':
-                        logdbg('Data current_conditions from WLL before {}:'.format(data))
+                        logdbg('Current conditions received : {}'.format(data))
                         if 'ts' in data['data']:
                             wll_packet['dateTime'] = data['data']['ts']
 
@@ -476,7 +448,7 @@ class WLLDriverAPI():
                                     wll_packet['inDewpoint'] = s['dew_point_in']
 
                     if type_of_packet == 'realtime_broadcast':
-                        logdbg('Data realtime_broadcast from WLL before {}:'.format(data))
+                        logdbg('Realtime broadcast received : {}'.format(data))
                         if 'ts' in data:
                             udp_wll_packet['dateTime'] = data['ts']
 
@@ -505,7 +477,7 @@ class WLLDriverAPI():
                                             if 'rain_size' in s:
                                                 rainSize = s['rain_size']
 
-            logdbg("rainFall_Daily set is : {}".format(rainFall_Daily))
+            logdbg("rainFall_Daily set : {}".format(rainFall_Daily))
 
             if self.rain_previous_period is not None:
                 rain, rainRate = self.calculate_rain(rainFall_Daily, rainRate, rainSize)
@@ -514,19 +486,18 @@ class WLLDriverAPI():
                     add_current_rain = {'rain': rain,
                                         'rainRate': rainRate,
                                         }
-                if rainFall_Daily >= 0 and rainFall_Daily is not None:
-                    self.rain_previous_period = rainFall_Daily
 
-                logdbg("Rain rightnow is :" + str(rain))
-                logdbg("rainRate rightnow is : {}".format(rainRate))
+                if add_current_rain['rain'] > 0:
+                    logdbg("Rain : {}".format(rain))
+
+                if add_current_rain['rainRate'] > 0:
+                    logdbg("rainRate : {}".format(rainRate))
 
             else:
                 if rainFall_Daily is not None:
                     if rainFall_Daily >= 0:
                         self.rain_previous_period = rainFall_Daily
-                        logdbg("Rainfall set by WLLDriver")
-
-            logdbg("Set previous period rain to: " + str(self.rain_previous_period))
+                        logdbg("rainFall_Daily set by WLLDriver : {}".format(self.rain_previous_period))
 
             if type_of_packet == 'current_conditions':
                 if add_current_rain is not None:
@@ -539,20 +510,26 @@ class WLLDriverAPI():
                     if extraHumid is not None:
                         wll_packet.update(extraHumid)
 
-                _packet = copy.copy(wll_packet)
+                if wll_packet['dateTime'] is not None:
+                    _packet = copy.copy(wll_packet)
 
-                logdbg("Current conditions packet received {}".format(_packet))
+                logdbg("Current conditions Weewx packet : {}".format(_packet))
 
             if type_of_packet == 'realtime_broadcast':
                 if add_current_rain is not None:
                     udp_wll_packet.update(add_current_rain)
 
-                logdbg("UDP packet received {}".format(udp_wll_packet))
+                logdbg("Realtime broadcast Weewx packet : {}".format(udp_wll_packet))
 
-                _packet = copy.copy(udp_wll_packet)
+                if udp_wll_packet['dateTime'] is not None:
+                    _packet = copy.copy(udp_wll_packet)
 
-            if _packet is not None:
-                logdbg("Packet received from WLL module {}:".format(_packet))
+            before_time = time.time() - 120
+            after_time = time.time() + 120
+
+            if _packet is not None and _packet['dateTime'] is not None and before_time <= _packet[
+                'dateTime'] and after_time >= _packet['dateTime']:
+                logdbg("Final packet return to Weewx : {}".format(_packet))
                 yield _packet
 
             else:
@@ -622,7 +599,7 @@ class WLLDriverAPI():
 
         for archive_interval in dict_timestamp:
             url_apiv2_wl = self.WLAPIv2(archive_interval[index_start_timestamp], archive_interval[index_end_timestamp])
-            logdbg("URL API Weatherlink is {} ".format(url_apiv2_wl))
+            logdbg("URL API Weatherlink : {} ".format(url_apiv2_wl))
             data_wl = self.request_json_data(url_apiv2_wl, self.api_parameters['time_out'], 'Weatherlink.com')
 
             for _packet in self.data_decode_wl(data_wl, archive_interval[index_start_timestamp],
@@ -781,6 +758,9 @@ class WLLDriver(weewx.drivers.AbstractDevice):
                     timeout_udp_broadcast = time.time() + self.poll_interval
 
                     self.WLLDriverAPI.request_realtime_broadcast()
+
+                    #if self.poll_interval:
+                        #time.sleep(3)
 
                     while time.time() < timeout_udp_broadcast:
                         for _realtime_packet in self.WLLDriverAPI.request_wll('realtime_broadcast'):
