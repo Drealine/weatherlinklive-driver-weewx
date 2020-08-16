@@ -5,3 +5,4 @@
 .idea/modules.xml
 .idea/weatherlinklive-driver-weewx.iml
 *.py
+*.xml

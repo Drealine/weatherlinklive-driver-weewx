@@ -487,13 +487,6 @@ class WLLDriverAPI():
                     add_current_rain = {'rain': rain,
                                         'rainRate': rainRate,
                                         }
-
-                if add_current_rain['rain'] > 0:
-                    logdbg("Rain : {}".format(rain))
-
-                if add_current_rain['rainRate'] > 0:
-                    logdbg("rainRate : {}".format(rainRate))
-
             else:
                 if rainFall_Daily is not None:
                     if rainFall_Daily >= 0:
