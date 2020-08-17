@@ -137,7 +137,9 @@ class WLLDriverAPI():
 
     def calculate_rain(self, rainFall_Daily, rainRate, rainSize):
 
+        # Set values to None to prevent no declaration
         rain = None
+        rain_multiplier = None
 
         if rainFall_Daily is not None and rainRate is not None and rainSize is not None:
             # Check bucket size
@@ -152,10 +154,11 @@ class WLLDriverAPI():
                     rain_multiplier = 0.1
 
             # Calculate rain
-            if self.rain_previous_period is not None and rainFall_Daily is not None:
+            if self.rain_previous_period is not None and rainFall_Daily is not None and rain_multiplier is not None:
                 if (rainFall_Daily - self.rain_previous_period) < 0:
-                    logdbg("rainFall_Daily not be a negative number, so set to 0")
                     self.rain_previous_period = 0
+                    rain = 0
+                    logdbg("Not a negative number, so set  to 0")
                 else:
                     rain = (rainFall_Daily - self.rain_previous_period) * rain_multiplier
 
@@ -169,7 +172,7 @@ class WLLDriverAPI():
                         rain = rain / 2.54
 
             # Calculate rainRate
-            if rainRate is not None:
+            if rainRate is not None and rain_multiplier is not None:
                 if rainRate > 0:
                     rainRate = rainRate * rain_multiplier
                     logdbg("Rain Rate now : {}".format(rainRate))
