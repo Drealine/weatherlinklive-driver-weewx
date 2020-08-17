@@ -60,7 +60,8 @@ class WLLDriverAPI():
 
         # Define sensor ID for Weatherlink.com
 
-        self.dict_sensor_type = {'iss': {46, 48, 43},
+        self.dict_sensor_type = {'iss': {23, 24, 27, 28, 43, 44, 45, 46, 48, 49, 50,
+                                         51, 76, 77, 78, 79, 80, 81, 82, 83},
                                  'extraTemp': {55},
                                  'extraHumid': {55},
                                  }
@@ -156,8 +157,7 @@ class WLLDriverAPI():
         if rainFall_Daily is not None and rain_multiplier is not None:
             if self.rain_previous_period is not None:
                 if (rainFall_Daily - self.rain_previous_period) < 0:
-                    logdbg(
-                        'Not a negative number, so set previous rain and rain to 0. It might cause by reset midnight')
+                    logdbg('Not negative number. Set rain to 0. Essentially caused by reset midnight')
                     self.rain_previous_period = 0
                     rain = 0
                 else:
@@ -716,7 +716,7 @@ class WLLDriver(weewx.drivers.AbstractDevice):
 
         # Generate values since good stamp in Weewx database
 
-        while self.ntries < self.max_tries:
+        while self.ntries < 5:
             try:
                 now_timestamp_wl = self.WLLDriverAPI.get_timestamp_wl_archive()
 
@@ -733,7 +733,7 @@ class WLLDriver(weewx.drivers.AbstractDevice):
 
             except weewx.WeeWxIOError as e:
                 logerr("Failed attempt %d of %d to get loop data: %s" %
-                       (self.ntries, self.max_tries, e))
+                       (self.ntries, 5, e))
                 self.ntries += 1
                 time.sleep(self.retry_wait)
         else:
