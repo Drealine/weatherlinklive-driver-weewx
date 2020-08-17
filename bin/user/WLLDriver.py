@@ -141,28 +141,29 @@ class WLLDriverAPI():
         rain = None
         rain_multiplier = None
 
-        if rainFall_Daily is not None and rainRate is not None and rainSize is not None:
-            # Check bucket size
-            if rainSize is not None:
-                if rainSize == 1:
-                    rain_multiplier = 0.01
+        # Check bucket size
+        if rainSize is not None:
+            if rainSize == 1:
+                rain_multiplier = 0.01
 
-                if rainSize == 2:
-                    rain_multiplier = 0.2
+            if rainSize == 2:
+                rain_multiplier = 0.2
 
-                if rainSize == 3:
-                    rain_multiplier = 0.1
+            if rainSize == 3:
+                rain_multiplier = 0.1
 
-            # Calculate rain
-            if self.rain_previous_period is not None and rainFall_Daily is not None and rain_multiplier is not None:
+        # Calculate rain
+        if rainFall_Daily is not None and rain_multiplier is not None:
+            if self.rain_previous_period is not None:
                 if (rainFall_Daily - self.rain_previous_period) < 0:
+                    logdbg(
+                        'Not a negative number, so set previous rain and rain to 0. It might cause by reset midnight')
                     self.rain_previous_period = 0
                     rain = 0
-                    logdbg("Not a negative number, so set  to 0")
                 else:
                     rain = (rainFall_Daily - self.rain_previous_period) * rain_multiplier
 
-                if rain is not None and rain > 0:
+                if rain > 0 and rain is not None and rainSize is not None:
                     logdbg("Rain now : {}".format(rain))
 
                     if rainSize == 2:
@@ -170,20 +171,21 @@ class WLLDriverAPI():
 
                     if rainSize == 3:
                         rain = rain / 2.54
-
-            # Calculate rainRate
-            if rainRate is not None and rain_multiplier is not None:
-                if rainRate > 0:
-                    rainRate = rainRate * rain_multiplier
-                    logdbg("Rain Rate now : {}".format(rainRate))
-
-                    if rainSize == 2:
-                        rainRate = rainRate / 25.4
-
-                    if rainSize == 3:
-                        rainRate = rainRate / 2.54
         else:
             rain = None
+
+        # Calculate rainRate
+        if rainRate is not None and rain_multiplier is not None:
+            if rainRate > 0 and rainSize is not None:
+                rainRate = rainRate * rain_multiplier
+                logdbg("Rain Rate now : {}".format(rainRate))
+
+                if rainSize == 2:
+                    rainRate = rainRate / 25.4
+
+                if rainSize == 3:
+                    rainRate = rainRate / 2.54
+        else:
             rainRate = None
 
         if rainFall_Daily is not None and rainFall_Daily >= 0:
