@@ -163,7 +163,7 @@ class WLLDriverAPI():
                 else:
                     rain = (rainFall_Daily - self.rain_previous_period) * rain_multiplier
 
-                if rain > 0 and rain is not None and rainSize is not None:
+                if rain is not None and rainSize is not None and rain > 0:
                     logdbg("Rain now : {}".format(rain))
 
                     if rainSize == 2:
@@ -176,7 +176,7 @@ class WLLDriverAPI():
 
         # Calculate rainRate
         if rainRate is not None and rain_multiplier is not None:
-            if rainRate > 0 and rainSize is not None:
+            if rainSize is not None and rainRate > 0:
                 rainRate = rainRate * rain_multiplier
                 logdbg("Rain Rate now : {}".format(rainRate))
 
