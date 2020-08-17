@@ -188,6 +188,7 @@ class WLLDriverAPI():
         else:
             rainRate = None
 
+        # Set rainFall_Daily to previous rain
         if rainFall_Daily is not None and rainFall_Daily >= 0:
             self.rain_previous_period = rainFall_Daily
             logdbg("Rainfall_Daily set after calculated : {}".format(self.rain_previous_period))
