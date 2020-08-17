@@ -60,7 +60,7 @@ class WLLDriverAPI():
 
         # Define sensor ID for Weatherlink.com
 
-        self.dict_sensor_type = {'iss': {46, 48},
+        self.dict_sensor_type = {'iss': {46, 48, 43},
                                  'extraTemp': {55},
                                  'extraHumid': {55},
                                  }
