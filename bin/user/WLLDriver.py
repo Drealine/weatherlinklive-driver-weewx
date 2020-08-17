@@ -66,7 +66,7 @@ class WLLDriverAPI():
                                  'extraHumid': {55},
                                  }
 
-        self.matches_sensor_type = ('iss', 'iss+', 'extraTemp', 'extraHumid')
+        #self.matches_sensor_type = ('iss', 'iss+', 'extraTemp', 'extraHumid')
 
         # Define values for driver work
 
@@ -292,7 +292,7 @@ class WLLDriverAPI():
 
                                                 # if rainSize == 3:
 
-                                                # What about this value ? Is not implement on weatherlink.com ?
+                                                # What about this value ? It is not implement on weatherlink.com ?
 
                                 for s in data_wl['sensors']:
                                     if s['sensor_type'] == 242:
