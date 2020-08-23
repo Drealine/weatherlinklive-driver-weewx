@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 DRIVER_NAME = "WLLDriver"
-DRIVER_VERSION = "0.2"
+DRIVER_VERSION = "0.4"
 
 import json
 import requests
@@ -21,6 +21,7 @@ import math
 import copy
 
 from socket import *
+from datetime import datetime, timedelta
 
 # Create socket for udp broadcast
 
@@ -59,45 +60,33 @@ class WLLDriverAPI():
     def __init__(self, api_parameters):
 
         # Define sensor ID for Weatherlink.com
-
         self.dict_sensor_type = {'iss': {23, 24, 27, 28, 43, 44, 45, 46, 48, 49, 50,
                                          51, 76, 77, 78, 79, 80, 81, 82, 83},
                                  'extraTemp': {55},
                                  'extraHumid': {55},
                                  }
 
-        #self.matches_sensor_type = ('iss', 'iss+', 'extraTemp', 'extraHumid')
-
         # Define values for driver work
-
         self.api_parameters = api_parameters
-        # comsocket.settimeout(self.api_parameters['time_out'])
         device_id = self.api_parameters['device_id']
         self.rain_previous_period = None
         self.udp_countdown = 0
         self.length_dict_device_id = None
         self.dict_device_id = dict((int(k), v) for k, v in (e.split(':') for e in device_id.split('-')))
         self.length_dict_device_id = len(self.dict_device_id)
+        self.check_health_time = False
+        self.health_timestamp_archive = None
 
         # Define URL for current conditions and udp broadcast
+        self.url_current_conditions = "http://{}:{}/v1/current_conditions".format(self.api_parameters['hostname'],
+                                                                                  self.api_parameters['port'])
+        logdbg("URL of current_conditions : {}".format(self.url_current_conditions))
+        self.url_realtime_broadcast = "http://{}:{}/v1/real_time?duration=3600".format(self.api_parameters['hostname'],
+                                                                                       self.api_parameters['port'])
+        logdbg("URL of realtime_broadcast : {}".format(self.url_current_conditions))
 
-        self.url_current_conditions = "http://{}/v1/current_conditions".format(self.api_parameters['hostname'])
-        self.url_realtime_broadcast = "http://{}/v1/real_time?duration=3600".format(self.api_parameters['hostname'])
-
-        # Define schema packet for WLL and Weatherlink.com
-
-        self.schema_wl_packet = {'dateTime': None,
-                                 'usUnits': weewx.US,
-                                 'interval': self.api_parameters['wl_archive_interval'],
-                                 }
-
-        self.schema_wll_packet = {'dateTime': None,
-                                  'usUnits': weewx.US,
-                                  }
-
-        self.schema_udp_wll_packet = {'dateTime': None,
-                                      'usUnits': weewx.US,
-                                      }
+        # Init time to request Health API
+        self.set_time_health_api()
 
     def get_timestamp_wl_archive(self):
 
@@ -119,6 +108,17 @@ class WLLDriverAPI():
 
         return timestamp_wl_archive
 
+    def round_minutes(self,timestamp, direction, resolution):
+
+        now = datetime.fromtimestamp(timestamp)
+        dt = now.replace(second=0, microsecond=0)
+        print(dt)
+        new_minute = (dt.minute // resolution + (1 if direction == 'up' else 0)) * resolution
+        result = dt + timedelta(minutes=new_minute - dt.minute)
+        print(result)
+
+        return int(datetime.timestamp(result))
+
     def request_json_data(self, url, request_timeout, type_of_request):
 
         json_data = None
@@ -131,10 +131,18 @@ class WLLDriverAPI():
                 return json_data.json()
 
         except requests.Timeout as error:
-            raise weewx.WeeWxIOError('Request timeout from {} : {}'.format(type_of_request, error))
+            if type_of_request == 'HealthAPI':
+                logdbg('Request timeout for HealthAPI, pass.')
+                return
+            else:
+                raise weewx.WeeWxIOError('Request timeout from {} : {}'.format(type_of_request, error))
 
         except requests.RequestException as error:
-            raise weewx.WeeWxIOError('Request exception from {} : {}'.format(type_of_request, error))
+            if type_of_request == 'HealthAPI':
+                logdbg('Request exception for HealthAPI, pass.')
+                return
+            else:
+                raise weewx.WeeWxIOError('Request exception from {} : {}'.format(type_of_request, error))
 
     def calculate_rain(self, rainFall_Daily, rainRate, rainSize):
 
@@ -195,6 +203,50 @@ class WLLDriverAPI():
 
         return rain, rainRate
 
+    def data_decode_health_wl(self, data, timestamp):
+
+        # Function to decode health data from Weatherlink.com
+
+        # Copie json data to new value
+        data_wl = data
+        # Set new dict
+        dict_health = {}
+
+        for nmb_device_id in range(1, len(self.dict_device_id) + 1, 1):
+            for index_json in range(0, len(data_wl['sensors']), 1):
+                for device_id, device in self.dict_device_id.items():
+                    temp_dict_device_id = self.dict_device_id[device_id]
+                    temp_dict_device_id = ''.join([i for i in temp_dict_device_id if not i.isdigit()])
+
+                    for sensor_type_id in self.dict_sensor_type[temp_dict_device_id]:
+                        for s in data_wl['sensors']:
+                            if s['sensor_type'] == sensor_type_id:
+                                for s in data_wl['sensors'][index_json]['data']:
+                                    if 'tx_id' in s and s['tx_id'] == device_id and s['ts'] == timestamp:
+                                        if 'reception' in s:
+                                            if self.dict_device_id[device_id] == 'iss' or \
+                                                    self.dict_device_id[device_id] == 'iss+':
+                                                dict_health['rxCheckPercent'] = s['reception']
+
+                        for s in data_wl['sensors']:
+                            if s['sensor_type'] == 504:
+                                for s in data_wl['sensors'][index_json]['data']:
+                                    if s['ts'] == timestamp:
+                                        if 'battery_voltage' in s:
+                                            tmp_battery_voltage = s['battery_voltage']
+                                            if tmp_battery_voltage is not None:
+                                                tmp_battery_voltage = tmp_battery_voltage / 1000
+                                                dict_health['consBatteryVoltage'] = tmp_battery_voltage
+                                        if 'input_voltage' in s:
+                                            tmp_input_voltage = s['input_voltage']
+                                            if tmp_input_voltage is not None:
+                                                tmp_input_voltage = tmp_input_voltage / 1000
+                                                dict_health['supplyVoltage'] = tmp_input_voltage
+
+        if dict_health is not None and dict_health != {}:
+            logdbg("Health Packet received from Weatherlink.com : {}".format(dict_health))
+            yield dict_health
+
     def data_decode_wl(self, data, start_timestamp, end_timestamp):
 
         # Function to decode data from Weatherlink.com
@@ -206,6 +258,10 @@ class WLLDriverAPI():
             # Set dict
             extraTemp = {}
             extraHumid = {}
+            wl_packet = {'dateTime': None,
+                         'usUnits': weewx.US,
+                         'interval': self.api_parameters['wl_archive_interval'],
+                         }
 
             # Set values to None
             rainSize = None
@@ -215,7 +271,6 @@ class WLLDriverAPI():
 
             while start_timestamp <= end_timestamp:
                 logdbg("Request archive for timestamp : {}".format(start_timestamp))
-                wl_packet = copy.copy(self.schema_wl_packet)
 
                 for nmb_device_id in range(1, len(self.dict_device_id) + 1, 1):
                     for index_json in range(0, len(data_wl['sensors']), 1):
@@ -249,6 +304,10 @@ class WLLDriverAPI():
                                                         extraHumid[
                                                             'extraHumid{}'.format(
                                                                 nmb_device_id)] = s['hum_last']
+                                                if 'reception' in s:
+                                                    if self.dict_device_id[device_id] == 'iss' or \
+                                                            self.dict_device_id[device_id] == 'iss+':
+                                                        wl_packet['rxCheckPercent'] = s['reception']
                                                 if 'dew_point_last' in s:
                                                     wl_packet['dewpoint'] = s['dew_point_last']
                                                 if 'rain_size' in s:
@@ -314,16 +373,31 @@ class WLLDriverAPI():
                                                 if 'dew_point_in' in s:
                                                     wl_packet['inDewpoint'] = s['dew_point_in']
 
+                                for s in data_wl['sensors']:
+                                    if s['sensor_type'] == 504:
+                                        for s in data_wl['sensors'][index_json]['data']:
+                                            if s['ts'] == start_timestamp:
+                                                if 'battery_voltage' in s:
+                                                    tmp_battery_voltage = s['battery_voltage']
+                                                    if tmp_battery_voltage is not None:
+                                                        tmp_battery_voltage = tmp_battery_voltage / 1000
+                                                        wl_packet['consBatteryVoltage'] = tmp_battery_voltage
+                                                if 'input_voltage' in s:
+                                                    tmp_input_voltage = s['input_voltage']
+                                                    if tmp_input_voltage is not None:
+                                                        tmp_input_voltage = tmp_input_voltage / 1000
+                                                        wl_packet['supplyVoltage'] = tmp_input_voltage
+
                 wl_packet['dateTime'] = start_timestamp
 
                 if len(self.dict_device_id) > 1:
-                    if extraTemp is not None:
+                    if extraTemp is not None and extraTemp != {}:
                         wl_packet.update(extraTemp)
 
-                    if extraHumid is not None:
+                    if extraHumid is not None and extraHumid != {}:
                         wl_packet.update(extraHumid)
 
-                if wl_packet is not None:
+                if wl_packet is not None and wl_packet['dateTime'] is not None:
                     logdbg("Packet received from Weatherlink.com : {}".format(wl_packet))
                     start_timestamp = int(start_timestamp + (60 * int(self.api_parameters['wl_archive_interval'])))
                     yield wl_packet
@@ -336,20 +410,20 @@ class WLLDriverAPI():
         except IndexError as error:
             raise weewx.WeeWxIOError('Structure type is not valid. Error is : {}'.format(error))
 
-        # Keep this line for futur use
-        '''if self.poll_interval: 
-            time.sleep(self.poll_interval)'''
-
     def data_decode_wll(self, data, type_of_packet):
 
         # Function to decode data from WLL module
 
         try:
-            # global rainFall_Daily
-
             # Set dict
             extraTemp = {}
             extraHumid = {}
+            wll_packet = {'dateTime': None,
+                          'usUnits': weewx.US,
+                          }
+            udp_wll_packet = {'dateTime': None,
+                              'usUnits': weewx.US,
+                              }
 
             # Set values to None
             add_current_rain = None
@@ -357,10 +431,6 @@ class WLLDriverAPI():
             rainFall_Daily = None
             rainRate = None
             rainSize = None
-
-            # Copy schema to new value
-            wll_packet = copy.copy(self.schema_wll_packet)
-            udp_wll_packet = copy.copy(self.schema_udp_wll_packet)
 
             for device_id, device in self.dict_device_id.items():
                 for nmb_device_id in range(1, len(self.dict_device_id) + 1, 1):
@@ -399,6 +469,8 @@ class WLLDriverAPI():
                                             wll_packet['heatindex'] = s['heat_index']
                                         if 'wind_chill' in s:
                                             wll_packet['windchill'] = s['wind_chill']
+                                        if 'trans_battery_flag' in s:
+                                            wll_packet['txBatteryStatus'] = s['trans_battery_flag']
 
                                     if self.dict_device_id[device_id] == 'iss' or self.dict_device_id[
                                         device_id] == 'iss+' or self.dict_device_id[device_id] == 'extra_Anenometer':
@@ -510,6 +582,9 @@ class WLLDriverAPI():
                     if extraHumid is not None:
                         wll_packet.update(extraHumid)
 
+                for _health_packet in self.check_health_api(time.time()):
+                    wll_packet.update(_health_packet)
+
                 if wll_packet['dateTime'] is not None:
                     _packet = copy.copy(wll_packet)
 
@@ -540,7 +615,7 @@ class WLLDriverAPI():
         except IndexError as error:
             raise weewx.WeeWxIOError('Structure type is not valid. Error is : {}'.format(error))
 
-    def WLAPIv2(self, start_timestamp=None, end_timestamp=None):
+    def WLAPIv2(self, start_timestamp, end_timestamp):
 
         parameters = {
             "api-key": str(self.api_parameters['wl_apikey']),
@@ -571,6 +646,49 @@ class WLLDriverAPI():
             parameters["end-timestamp"], apiSignature)
 
         return url_wlapiv2
+
+    def check_health_api(self, timestamp):
+
+        now_time = int(timestamp - 120) # Attempt 2min to archive new data from WL
+
+        if self.health_timestamp_archive <= now_time:
+            logdbg("Request health conditions into current_conditions for "
+                   "timestamp : {}".format(self.health_timestamp_archive))
+
+            for _health_packet in self.request_health_wl(self.health_timestamp_archive -
+                                                         (self.api_parameters['wl_archive_interval'] * 60),
+                                                         self.health_timestamp_archive):
+                logdbg("Health conditions packet received : {}".format(_health_packet))
+                if _health_packet is not None:
+                    yield _health_packet
+
+            # Set values to False and None to prevent block code on current_conditions same that URL is None
+            self.check_health_time = False
+            self.health_timestamp_archive = None
+
+        self.set_time_health_api()
+
+    def set_time_health_api(self):
+
+        # Set time of HealthAPI for future request
+        if not self.check_health_time:
+            current_time = time.time()
+            self.health_timestamp_archive = self.round_minutes(current_time, 'up', 15)
+            self.check_health_time = True
+            logdbg("Set future time request health API to {}".format(self.health_timestamp_archive))
+
+
+    def request_health_wl(self, start_timestamp, end_timestamp):
+
+        # Function to request health archive from Weatherlink.com
+
+        url_apiv2_wl = self.WLAPIv2(start_timestamp, end_timestamp)
+        logdbg("URL API Weatherlink : {} ".format(url_apiv2_wl))
+        data_wl = self.request_json_data(url_apiv2_wl, self.api_parameters['time_out'], 'HealthAPI')
+
+        for _packet in self.data_decode_health_wl(data_wl, end_timestamp):
+            if _packet is not None:
+                yield _packet
 
     def request_wl(self, start_timestamp, end_timestamp):
 
@@ -681,6 +799,7 @@ class WLLDriver(weewx.drivers.AbstractDevice):
         api_parameters['udp_enable'] = int(stn_dict.get('udp_enable', 0))
         api_parameters['wind_gust_2m_enable'] = int(stn_dict.get('wind_gust_2m_enable', 0))
         api_parameters['hostname'] = (stn_dict.get('hostname', "127.0.0.1"))
+        api_parameters['port'] = (stn_dict.get('port', "80"))
         api_parameters['wl_apikey'] = (stn_dict.get('wl_apikey', "ABCABC"))
         api_parameters['wl_apisecret'] = (stn_dict.get('wl_apisecret', "ABCABC"))
         api_parameters['wl_stationid'] = (stn_dict.get('wl_stationid', "ABCABC"))
@@ -732,7 +851,7 @@ class WLLDriver(weewx.drivers.AbstractDevice):
                     return
 
             except weewx.WeeWxIOError as e:
-                logerr("Failed attempt %d of %d to get loop data: %s" %
+                logerr("Failed attempt %d of %d to get loop data in genStartupRecords: %s" %
                        (self.ntries, 5, e))
                 self.ntries += 1
                 time.sleep(self.retry_wait)
@@ -759,16 +878,13 @@ class WLLDriver(weewx.drivers.AbstractDevice):
 
                     self.WLLDriverAPI.request_realtime_broadcast()
 
-                    #if self.poll_interval:
-                        #time.sleep(3)
-
                     while time.time() < timeout_udp_broadcast:
                         for _realtime_packet in self.WLLDriverAPI.request_wll('realtime_broadcast'):
                             yield _realtime_packet
                             self.ntries = 1
 
             except weewx.WeeWxIOError as e:
-                logerr("Failed attempt %d of %d to get loop data: %s" %
+                logerr("Failed attempt %d of %d to get loop data in genLoopPackets: %s" %
                        (self.ntries, self.max_tries, e))
                 self.ntries += 1
                 time.sleep(self.retry_wait)
