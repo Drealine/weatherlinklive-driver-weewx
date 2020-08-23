@@ -83,7 +83,7 @@ class WLLDriverAPI():
         logdbg("URL of current_conditions : {}".format(self.url_current_conditions))
         self.url_realtime_broadcast = "http://{}:{}/v1/real_time?duration=3600".format(self.api_parameters['hostname'],
                                                                                        self.api_parameters['port'])
-        logdbg("URL of realtime_broadcast : {}".format(self.url_current_conditions))
+        logdbg("URL of realtime_broadcast : {}".format(self.url_realtime_broadcast))
 
         # Init time to request Health API
         self.set_time_health_api()
