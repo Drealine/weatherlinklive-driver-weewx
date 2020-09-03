@@ -49,6 +49,7 @@ WLLDriver support at the moment only 5 extraTemp, 5 extraHumid or 1 Wind deporte
 | **iss** | Set the ISS |
 | **extraTempX** | Set an extra temperature sensor with X is the number |
 | **extraHumidX** | Set an extra humidity sensor with X is the number |
+| **extraAnemometer** | Set a deported anemometer if it's not connected to the ISS |
 
 **/!\ ISS and ID must be set at first on parameter.**<br/>
 **/!\ When adding sensors, make sur that schema is correct on Weewx. If not, please add a schema by following this tutorial : https://github.com/poblabs/weewx-belchertown/wiki/Adding-a-new-observation-type-to-the-WeeWX-database**
@@ -59,7 +60,9 @@ Each parameter is separated by **```-```**
 
 ### Wind 2min
 
-Weatherlink Live module can calculate wind average and gust each 2min instead of 10min by default.
+**/!\ Not supported if realtime is enabled.**
+
+Weatherlink Live module can calculate wind average and gust each 2min instead of 10min by default. <br/>
 To enable this, set this parameter on [WLLDriver] : ```wind_2min_enable = 1```
 
 ### Change HTTP port
