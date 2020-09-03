@@ -9,7 +9,7 @@ Created this driver to make request to WeatherLinkLive module including archive 
 - Find on **weewx.conf** ```station_type``` and change by this : ```station_type = WLLDriver```
 - If you want to retrieve new data when the driver fail, set ```loop_on_init = True``` on **weewx.conf**
 
-## Set conf on Weewx
+## Configuration on Weewx
 
 After installing driver, a new stanza appear at the end of the file **weewx.conf**.
 
