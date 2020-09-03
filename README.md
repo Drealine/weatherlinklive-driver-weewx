@@ -13,6 +13,8 @@ Created this driver to make request to WeatherLinkLive module including archive 
 
 After installing driver, a new stanza appear at the end of the file **weewx.conf**.
 
+The correct syntax for set a parameter is : ```blabla = 1```
+
 ### Default setting needed to run the driver
 
 - ```max_tries``` - Max tries before Weewx raise an exception and finished the loop.<br />
@@ -32,12 +34,29 @@ If you want to use weatherlink.com to retrieve lost data when Weewx crash for ex
 - Use this tool to know your station ID : https://repl.it/repls/MeaslyExternalMegabyte#main.php by change ```api-key``` and ```api-secret``` and run the script.
 - Keep in mind your station ID.
 
-and set parameters on **weewx.conf** in [WLLDriver] :
+Enable the feature ```wl_archive_enable = 1``` and set parameters on **weewx.conf** in [WLLDriver] :
 
 - ```wl_apikey``` - Create an API Key on your Weatherlink account
 - ```wl_apisecret``` - By creating API Key, you've also need an API Secret
 - ```wl_stationid``` - Check your station ID by using the method explain before
 - ```wl_archive_interval``` - Be carefull by set this because it depending on your subscription on Weatherlink.com. For better use, please set the same archive interval than the Weewx engine.
+
+### Add extra sensor or deported sensor
+
+WLLDriver support at the moment only 5 extraTemp, 5 extraHumid or 1 Wind deported.
+
+| Sensor        | Type |
+| ------|-----|
+| **iss** | Set the ISS |
+| **extraTempX** | Set an extra temperature sensor with X is the number |
+| **extraHumidX** | Set an extra humidity sensor with X is the number |
+
+**/!\ ISS and ID must be set at first on parameter.**<br/>
+**/!\ When adding sensors, make sur that schema is correct on Weewx. If not, please add a schema by following this tutorial : https://github.com/poblabs/weewx-belchertown/wiki/Adding-a-new-observation-type-to-the-WeeWX-database**
+
+If you want to enable for example an extra temp sensor, set like this : ```device_id = iss:1-extraTemp1:2```<br/>
+You can ajust and add more extra sensors like this : ```device_id = iss:1-extraTemp1:2-extraTemp2:4-extraHumid1:7```<br/>
+Each parameter is separated by **```-```**
 
 ### Wind gust 2min
 
