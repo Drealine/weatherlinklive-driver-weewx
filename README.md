@@ -1,37 +1,32 @@
-# WLLDriver
+WLLDriver
+============
 Created this driver to make request to WeatherLinkLive module including archive from Weatherlink.com when data be lost on Weewx.
 
-Configuration : 
+## Installation
 
-- Download WLLDriver by using the ZIP repo or the latest release. 
-On Debian/Linux : ```wget https://github.com/Drealine/weatherlinklive-driver-weewx/releases/download/v0.3/WLLDriver.zip```
-- Change on weewx.conf station_type = WLLDriver
-- Know your station ID by following this link : https://weatherlink.github.io/v2-api/authentication
-default API request is : https://api.weatherlink.com/v2/stations?api-key=YOURAPIKEY&api-signature=YOURAPISIGNATURE&t=CURRENTTIMESTAMP
-You can use this tool to know your station ID : https://repl.it/repls/MeaslyExternalMegabyte#main.php
-- Set parameters as you want at the end of weewx.conf: 
+- Download the latest release of WLLDriver : https://github.com/Drealine/weatherlinklive-driver-weewx/releases
+- Install the driver : ```wee_extension --install WLLDriver.zip```
+- Find on weewx.conf ```station_type``` and change by this : ```station_type = WLLDriver```
 
-```
-[WLLDriver]
-    max_tries - #Max tries before Weewx raise an exception and finished the loop. Default : 10
-    retry_wait - #Time to retry in second between each. Default : 5
-    poll_interval - #The time to sleep in second between 2 requests. If you have enabled UDP please note that all sensor would be reach each poll_interval. Default : 10
-    udp_enable - #Start broadcast each 3 secondes for Wind and Rain. 0 if you want to disable, 1 if you want to enable. Default : 0
-    hostname - #Set your IP or hostname of WLL module.
-    time_out - #Set this for timeout in second of HTTP and UDP request. Default : 10
-    device_id - #Set the ID of your ISS that you've configured on the WLL Module. Ex : 1:iss-10:extraTemp1. Default : 1:iss. Be carefull for extra sensor because the column would be exist in Weewx database
-    wind_gust_2m_enable - #Set this if you want to have wind gust refresh each 2min instead of 10min default. Don't use this if you have udp enabled. Default : 0
-    wl_apikey - #Create an API Key on your Weatherlink account
-    wl_apisecret - #By creating API Key, you've also need an API Secret
-    wl_stationid - #Check your station ID by using the method explain before
-    wl_archive_interval - #Be carefull by set this because it depending on your subscription on Weatherlink.com. For better use, please set the same archive interval than the Weewx engine.
-```
+## Create your API Key v2
 
-Credits : 
+If you want to use weatherlink.com to retrieve lost data when Weewx crash, you have to create an API Key.
 
-Thank to @vinceskahan on Github who give me examples to make this driver : 
-https://github.com/vinceskahan/weewx-weatherlinklive-json
+- Create your API Key v2 on https://www.weatherlink.com/account
+- Use this tool to know your station ID : https://repl.it/repls/MeaslyExternalMegabyte#main.php by change ```api-key``` and ```api-secret``` and run the script.
+- Keep in mind your station ID
 
-Thank to @grebleem to work on the developpment for the WLL Module : 
-https://github.com/grebleem/weewx-weatherlinkliveudp
+## Set conf on Weewx
+
+After installing driver, a new stanza appear at the end of the file weewx.conf.
+
+### Default setting needed to run the driver
+
+- ```max_tries``` - Max tries before Weewx raise an exception and finished the loop.<br />
+- ```retry_wait``` - Time to retry in second between each.<br />
+- ```poll_interval``` - The time to sleep in second between 2 requests. If you have enabled UDP please note that all sensor would be reach each poll_interval.<br />
+- ```realtime_enable``` - Start broadcast each 3 secondes for Wind and Rain.<br />
+- ```hostname``` - Set your IP or hostname of WLL module.<br />
+- ```time_out``` - Set this for timeout in second of HTTP and UDP request.<br />
+- ```device_id``` - Set the ID of your ISS that you've configured on the WLL Module. Ex : iss:1-extraTemp1:10. Default : iss:1.<br />
 
