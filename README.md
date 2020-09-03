@@ -57,7 +57,7 @@ If you want to enable for example an extra temp sensor, set like this : ```devic
 You can ajust and add more extra sensors like this : ```device_id = iss:1-extraTemp1:2-extraTemp2:4-extraHumid1:7```<br/>
 Each parameter is separated by **```-```**
 
-### Wind gust 2min
+### Wind 2min
 
 Weatherlink Live module can calculate wind average and gust each 2min instead of 10min by default.
 To enable this, set this parameter on [WLLDriver] : ```wind_2min_enable = 1```
