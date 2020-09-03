@@ -83,7 +83,7 @@ class WLLDriverAPI():
         self.check_health_time = False
         self.health_timestamp_archive = None
         self.list_iss = ['iss', 'iss+']
-        self.list_anemometer = ['extra_Anemometer']
+        self.list_anemometer = ['extraAnemometer']
 
         # Define URL for current conditions and udp broadcast
         self.url_current_conditions = "http://{}:{}/v1/current_conditions".format(self.api_parameters['hostname'],
