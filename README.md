@@ -59,7 +59,8 @@ Each parameter is separated by **```-```**
 
 ### Wind 2min
 
-Weatherlink Live module can calculate wind average and gust each 2min instead of 10min by default. Not supported if realtime is enabled.
+Weatherlink Live module can calculate wind average and gust each 2min instead of 10min by default. <br/>
+Not supported if realtime is enabled.
 To enable this, set this parameter on [WLLDriver] : ```wind_2min_enable = 1```
 
 ### Change HTTP port
