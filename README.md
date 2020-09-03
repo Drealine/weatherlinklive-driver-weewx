@@ -6,27 +6,48 @@ Created this driver to make request to WeatherLinkLive module including archive 
 
 - Download the latest release of WLLDriver : https://github.com/Drealine/weatherlinklive-driver-weewx/releases
 - Install the driver : ```wee_extension --install WLLDriver.zip```
-- Find on weewx.conf ```station_type``` and change by this : ```station_type = WLLDriver```
-
-## Create your API Key v2
-
-If you want to use weatherlink.com to retrieve lost data when Weewx crash, you have to create an API Key.
-
-- Create your API Key v2 on https://www.weatherlink.com/account
-- Use this tool to know your station ID : https://repl.it/repls/MeaslyExternalMegabyte#main.php by change ```api-key``` and ```api-secret``` and run the script.
-- Keep in mind your station ID
+- Find on **weewx.conf** ```station_type``` and change by this : ```station_type = WLLDriver```
+- If you want to retrieve new data when the driver fail, set ```loop_on_init = True``` on **weewx.conf**
 
 ## Set conf on Weewx
 
-After installing driver, a new stanza appear at the end of the file weewx.conf.
+After installing driver, a new stanza appear at the end of the file **weewx.conf**.
 
 ### Default setting needed to run the driver
 
 - ```max_tries``` - Max tries before Weewx raise an exception and finished the loop.<br />
 - ```retry_wait``` - Time to retry in second between each.<br />
 - ```poll_interval``` - The time to sleep in second between 2 requests. If you have enabled UDP please note that all sensor would be reach each poll_interval.<br />
-- ```realtime_enable``` - Start broadcast each 3 secondes for Wind and Rain.<br />
+- ```realtime_enable``` - Enable realtime each 3 secondes for Wind and Rain.<br />
 - ```hostname``` - Set your IP or hostname of WLL module.<br />
 - ```time_out``` - Set this for timeout in second of HTTP and UDP request.<br />
-- ```device_id``` - Set the ID of your ISS that you've configured on the WLL Module. Ex : iss:1-extraTemp1:10. Default : iss:1.<br />
+- ```device_id``` - Set the ID of your ISS that you've configured on the WLL Module. Ex : iss:1-extraTemp1:10.<br />
+- ```wl_archive_enable``` - Enable retrieve data from Weatherlink.com.<br />
 
+### Retrieve data from Weatherlink.com
+
+If you want to use weatherlink.com to retrieve lost data when Weewx crash for example, you have to create an API Key :
+
+- Create your API Key v2 on https://www.weatherlink.com/account
+- Use this tool to know your station ID : https://repl.it/repls/MeaslyExternalMegabyte#main.php by change ```api-key``` and ```api-secret``` and run the script.
+- Keep in mind your station ID.
+
+and set parameters on **weewx.conf** :
+
+- ```wl_apikey``` - Create an API Key on your Weatherlink account
+- ```wl_apisecret``` - By creating API Key, you've also need an API Secret
+- ```wl_stationid``` - Check your station ID by using the method explain before
+- ```wl_archive_interval``` - Be carefull by set this because it depending on your subscription on Weatherlink.com. For better use, please set the same archive interval than the Weewx engine.
+
+### Default value for each parameter
+
+| Parameter        | Default value      | Min/Max |
+| ------|-----|-----|
+| **max_tries** | 10 | 0/200 |
+| **retry_wait** | 5 | 0/NA	|
+| **poll_interval** 	| 5 | 0/NA |
+| **realtime_enable** | 0 | 0 = Disable / 1 = Enable |
+| **time_out** | 10 | 0/15 |
+| **wl_archive_enable** | 0 | 0 = Disable / 1 = Enable |
+| **device_id** | iss:1 | NA |
+| **wl_archive_interval** | NA | 1, 5 or 15 |
