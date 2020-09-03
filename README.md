@@ -3,7 +3,8 @@ Created this driver to make request to WeatherLinkLive module including archive 
 
 Configuration : 
 
-- Install the driver by using wee_extension --install WLLDriver.zip. You can download my repo as a ZIP or use this link : https://github.com/Drealine/weatherlinklive-driver-weewx/releases/download/v0.3/WLLDriver.zip
+- Download WLLDriver by using the ZIP repo or the latest release. 
+On Debian/Linux : ```wget https://github.com/Drealine/weatherlinklive-driver-weewx/releases/download/v0.3/WLLDriver.zip```
 - Change on weewx.conf station_type = WLLDriver
 - Know your station ID by following this link : https://weatherlink.github.io/v2-api/authentication
 default API request is : https://api.weatherlink.com/v2/stations?api-key=YOURAPIKEY&api-signature=YOURAPISIGNATURE&t=CURRENTTIMESTAMP
