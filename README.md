@@ -23,7 +23,7 @@ The correct syntax for set a parameter is : ```blabla = 1```
 - ```realtime_enable``` - Enable realtime each 3 secondes for Wind and Rain.<br />
 - ```hostname``` - Set your IP or hostname of WLL module.<br />
 - ```time_out``` - Set this for timeout in second of HTTP and UDP request.<br />
-- ```device_id``` - Set the ID of your ISS that you've configured on the WLL Module. Ex : iss:1-extraTemp1:10.<br />
+- ```device_id``` - Set the ID of your ISS that you've configured on the WLL Module.<br />
 - ```wl_archive_enable``` - Enable retrieve data from Weatherlink.com.<br />
 
 ### Retrieve data from Weatherlink.com
@@ -32,13 +32,12 @@ If you want to use weatherlink.com to retrieve lost data when Weewx crash for ex
 
 - Create your API Key v2 on https://www.weatherlink.com/account
 - Use this tool to know your station ID : https://repl.it/repls/MeaslyExternalMegabyte#main.php by change ```api-key``` and ```api-secret``` and run the script.
-- Keep in mind your station ID.
 
 Enable the feature ```wl_archive_enable = 1``` and set parameters on **weewx.conf** in [WLLDriver] :
 
-- ```wl_apikey``` - Create an API Key on your Weatherlink account
-- ```wl_apisecret``` - By creating API Key, you've also need an API Secret
-- ```wl_stationid``` - Check your station ID by using the method explain before
+- ```wl_apikey``` - Create an API Key on your Weatherlink account.
+- ```wl_apisecret``` - By creating API Key, you've also need an API Secret.
+- ```wl_stationid``` - Check your station ID by using the method explain before.
 - ```wl_archive_interval``` - Be carefull by set this because it depending on your subscription on Weatherlink.com. For better use, please set the same archive interval than the Weewx engine.
 
 ### Add extra sensor or deported sensor
