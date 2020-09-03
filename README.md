@@ -32,12 +32,21 @@ If you want to use weatherlink.com to retrieve lost data when Weewx crash for ex
 - Use this tool to know your station ID : https://repl.it/repls/MeaslyExternalMegabyte#main.php by change ```api-key``` and ```api-secret``` and run the script.
 - Keep in mind your station ID.
 
-and set parameters on **weewx.conf** :
+and set parameters on **weewx.conf** in [WLLDriver] :
 
 - ```wl_apikey``` - Create an API Key on your Weatherlink account
 - ```wl_apisecret``` - By creating API Key, you've also need an API Secret
 - ```wl_stationid``` - Check your station ID by using the method explain before
 - ```wl_archive_interval``` - Be carefull by set this because it depending on your subscription on Weatherlink.com. For better use, please set the same archive interval than the Weewx engine.
+
+### Wind gust 2min
+
+Weatherlink Live module can calculate wind average and gust each 2min instead of 10min by default.
+To enable this, set this parameter on [WLLDriver] : ```wind_2min_enable = 1```
+
+### Change HTTP port
+
+You can change the default port 80 to set a new port to request to the WLL module. To change to 8080 for example, set this parameter on [WLLDriver] : ```port = 8080```
 
 ### Default value for each parameter
 
@@ -51,3 +60,7 @@ and set parameters on **weewx.conf** :
 | **wl_archive_enable** | 0 | 0 = Disable / 1 = Enable |
 | **device_id** | iss:1 | NA |
 | **wl_archive_interval** | NA | 1, 5 or 15 |
+| **wind_2min_enable** | Not set so, 0 | 0 = Disable / 1 = Enable |
+| **port** | 80 | NA |
+
+
