@@ -74,7 +74,7 @@ To enable this, set this parameter on [WLLDriver] : ```wind_2min_enable = 1```
 
 You can change the default port 80 to set a new port to request to the WLL module. To change to 8080 for example, set this parameter on [WLLDriver] : ```port = 8080```
 
-### Default value for each parameter
+## Default value for each parameter
 
 | Parameter        | Default value      | Min/Max |
 | ------|-----|-----|
