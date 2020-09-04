@@ -432,13 +432,13 @@ class WLLDriverAPI():
                                     if 'wind_dir_last' in s:
                                         wll_packet['windDir'] = s['wind_dir_last']
 
-                                    if self.api_parameters['wind_2min_enable'] == 0:
+                                    if self.api_parameters['wind_gust_2min_enable'] == 0:
                                         if 'wind_speed_hi_last_10_min' in s:
                                             wll_packet['windGust'] = s['wind_speed_hi_last_10_min']
                                         if 'wind_dir_at_hi_speed_last_10_min' in s:
                                             wll_packet['windGustDir'] = s['wind_dir_at_hi_speed_last_10_min']
 
-                                    if self.api_parameters['wind_2min_enable'] == 1:
+                                    if self.api_parameters['wind_gust_2min_enable'] == 1:
                                         if 'wind_speed_hi_last_2_min' in s:
                                             wll_packet['windGust'] = s['wind_speed_hi_last_2_min']
                                         if 'wind_dir_at_hi_speed_last_2_min' in s:
@@ -728,7 +728,7 @@ class WLLDriver(weewx.drivers.AbstractDevice):
                                'retry_wait': int(stn_dict.get('retry_wait', 10)),
                                'poll_interval': int(stn_dict.get('poll_interval', 5)),
                                'realtime_enable': int(stn_dict.get('realtime_enable', 0)),
-                               'wind_2min_enable': int(stn_dict.get('wind_2min_enable', 0)),
+                               'wind_gust_2min_enable': int(stn_dict.get('wind_gust_2min_enable', 0)),
                                'hostname': (stn_dict.get('hostname', None)),
                                'port': (stn_dict.get('port', "80")),
                                'device_id': (stn_dict.get('device_id', str("iss:1"))),
@@ -741,7 +741,7 @@ class WLLDriver(weewx.drivers.AbstractDevice):
             raise weewx.ViolatedPrecondition("Timeout can't be more than 15 seconds for better use")
         if self.api_parameters['retry_wait'] < self.api_parameters['poll_interval']:
             raise weewx.ViolatedPrecondition("Retry wait must be more than poll interval")
-        if self.api_parameters['realtime_enable'] == 1 and self.api_parameters['wind_2min_enable'] == 1:
+        if self.api_parameters['realtime_enable'] == 1 and self.api_parameters['wind_gust_2min_enable'] == 1:
             raise weewx.ViolatedPrecondition("Wind gust 2min can't be set while realtime is enable")
         if self.api_parameters['hostname'] is None: raise weewx.ViolatedPrecondition("Hostname or IP must be set")
 
