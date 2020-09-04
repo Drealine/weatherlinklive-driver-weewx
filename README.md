@@ -28,6 +28,8 @@ The correct syntax for set a parameter is : ```blabla = 1```
 
 ### Retrieve data from Weatherlink.com
 
+NB : If you disable this option, you will not have more informations like txBatteryStatus, signal quality, etc. 
+
 If you want to use weatherlink.com to retrieve lost data when Weewx crash for example, you have to create an API Key :
 
 - Create your API Key v2 on https://www.weatherlink.com/account
