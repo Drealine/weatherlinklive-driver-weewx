@@ -56,7 +56,7 @@ Correct syntax is ```device:id_of_device``` where :
 | **extraHumidX** | Set an extra humidity sensor with X is the number |
 | **extraAnemometer** | Set a deported anemometer if it's not connected to the ISS |
 
-**/!\ ISS and ID must be set at first on parameter.**<br/>
+**/!\ ISS and ID must be put first on ```device_id```.**<br/>
 **/!\ When adding sensors, make sur that schema is correct on Weewx. If not, please add a schema by following this tutorial : https://github.com/poblabs/weewx-belchertown/wiki/Adding-a-new-observation-type-to-the-WeeWX-database**
 
 If you want to enable for example an extra temp sensor, set like this : ```device_id = iss:1-extraTemp1:2```<br/>
@@ -73,6 +73,19 @@ To enable this, set this parameter on [WLLDriver] : ```wind_gust_2min_enable = 1
 ### Change HTTP port
 
 You can change the default port 80 to set a new port to request to the WLL module. To change to 8080 for example, set this parameter on [WLLDriver] : ```port = 8080```
+
+### Health status of ISS & WLL
+
+**/!\ If you disable ```wl_archive_enable = 0```, you will not have the health status.**
+
+WLLDriver recuperate value for health ISS and WLL module each 15 minutes on Weatherlink.com :
+
+| Parameter        | Type |
+| ------|-----|
+| **txBatteryStatus** | Transmitter battery |
+| **rxCheckPercent** | Signal quality |
+| **consBatteryVoltage** | Battery in volt of the WLL module |
+| **supplyVoltage** | Supply voltage of the WLL module |
 
 ## Default value for each parameter
 
