@@ -44,6 +44,11 @@ Enable the feature ```wl_archive_enable = 1``` and set parameters on **weewx.con
 
 WLLDriver support at the moment only 5 extraTemp, 5 extraHumid or 1 Wind deported.
 
+Correct syntax is ```device:id_of_device``` where :
+
+- ```device``` is the **sensor**
+- ```id_of_device``` is the **id** that you've set when you configure the sensor with the WLL module
+
 | Sensor        | Type |
 | ------|-----|
 | **iss** | Set the ISS |
