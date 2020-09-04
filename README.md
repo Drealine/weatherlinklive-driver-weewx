@@ -28,7 +28,7 @@ The correct syntax for set a parameter is : ```blabla = 1```
 
 ### Retrieve data from Weatherlink.com
 
-If you want to use weatherlink.com to retrieve lost data when Weewx crash for example, you have to create an API Key :
+If you want to use weatherlink.com to retrieve lost data when Weewx crash for example, <br/>you have to create an API Key :
 
 - Create your API Key v2 on https://www.weatherlink.com/account
 - Use this tool to know your station ID : https://repl.it/repls/MeaslyExternalMegabyte#main.php by change ```api-key``` and ```api-secret``` and run the script.
