@@ -56,7 +56,7 @@ Correct syntax is ```device:id_of_device``` where :
 | **extraHumidX** | Set an extra humidity sensor with X is the number |
 | **extraAnemometer** | Set a deported anemometer if it's not connected to the ISS |
 
-**/!\ ISS and ID must be set at first on parameter.**<br/>
+**/!\ ISS and ID must be put first on ```device_id```.**<br/>
 **/!\ When adding sensors, make sur that schema is correct on Weewx. If not, please add a schema by following this tutorial : https://github.com/poblabs/weewx-belchertown/wiki/Adding-a-new-observation-type-to-the-WeeWX-database**
 
 If you want to enable for example an extra temp sensor, set like this : ```device_id = iss:1-extraTemp1:2```<br/>
