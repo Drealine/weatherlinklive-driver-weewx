@@ -28,8 +28,6 @@ The correct syntax for set a parameter is : ```blabla = 1```
 
 ### Retrieve data from Weatherlink.com
 
-NB : If you disable this option, you will not have more informations like txBatteryStatus, signal quality, etc. 
-
 If you want to use weatherlink.com to retrieve lost data when Weewx crash for example, you have to create an API Key :
 
 - Create your API Key v2 on https://www.weatherlink.com/account
@@ -75,6 +73,19 @@ To enable this, set this parameter on [WLLDriver] : ```wind_gust_2min_enable = 1
 ### Change HTTP port
 
 You can change the default port 80 to set a new port to request to the WLL module. To change to 8080 for example, set this parameter on [WLLDriver] : ```port = 8080```
+
+### Health status of sensors & WLL
+
+**/!\ If you disable ```wl_archive_enable = 0```, you will not have the health status.**
+
+WLLDriver recuperate value for health sensor and WLL module each 15 minutes on Weatherlink.com :
+
+| Parameter        | Type |
+| ------|-----|
+| **txBatteryStatus** | Transmitter battery |
+| **rxCheckPercent** | Signal quality |
+| **consBatteryVoltage** | Battery in volt of the WLL module |
+| **supplyVoltage** | Supply voltage of the WLL module |
 
 ## Default value for each parameter
 
