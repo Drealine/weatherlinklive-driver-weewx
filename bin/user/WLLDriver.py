@@ -735,7 +735,7 @@ class WLLDriver(weewx.drivers.AbstractDevice):
                                'wl_archive_enable': int(stn_dict.get('wl_archive_enable', 1))}
 
         # Verify conditions of require parameters before start the driver
-        if self.api_parameters['max_tries'] >= 200:
+        if self.api_parameters['max_tries'] > 200:
             raise weewx.ViolatedPrecondition("Max tries can't be more than 200 tries")
         if self.api_parameters['time_out'] >= 15:
             raise weewx.ViolatedPrecondition("Timeout can't be more than 15 seconds for better use")
