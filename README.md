@@ -44,6 +44,11 @@ Enable the feature ```wl_archive_enable = 1``` and set parameters on **weewx.con
 
 WLLDriver support at the moment only 5 extraTemp, 5 extraHumid or 1 Wind deported.
 
+Correct syntax is ```device:id_of_device``` where :
+
+- ```device``` is the **sensor**
+- ```id_of_device``` is the **id** that you've set when you configure the sensor with the WLL module
+
 | Sensor        | Type |
 | ------|-----|
 | **iss** | Set the ISS |
@@ -58,18 +63,18 @@ If you want to enable for example an extra temp sensor, set like this : ```devic
 You can ajust and add more extra sensors like this : ```device_id = iss:1-extraTemp1:2-extraTemp2:4-extraHumid1:7```<br/>
 Each parameter is separated by **```-```**
 
-### Wind 2min
+### Wind gust 2min
 
 **/!\ Not supported if realtime is enabled.**
 
-Weatherlink Live module can calculate wind average and gust each 2min instead of 10min by default. <br/>
-To enable this, set this parameter on [WLLDriver] : ```wind_2min_enable = 1```
+Weatherlink Live module can calculate wind gust each 2min instead of 10min by default. <br/>
+To enable this, set this parameter on [WLLDriver] : ```wind_gust_2min_enable = 1```
 
 ### Change HTTP port
 
 You can change the default port 80 to set a new port to request to the WLL module. To change to 8080 for example, set this parameter on [WLLDriver] : ```port = 8080```
 
-### Default value for each parameter
+## Default value for each parameter
 
 | Parameter        | Default value      | Min/Max |
 | ------|-----|-----|
@@ -81,7 +86,7 @@ You can change the default port 80 to set a new port to request to the WLL modul
 | **wl_archive_enable** | 0 | 0 = Disable / 1 = Enable |
 | **device_id** | iss:1 | NA |
 | **wl_archive_interval** | NA | 1, 5 or 15 |
-| **wind_2min_enable** | Not set so, 0 | 0 = Disable / 1 = Enable |
+| **wind_gust_2min_enable** | Not set so, 0 | 0 = Disable / 1 = Enable |
 | **port** | 80 | NA |
 
 
