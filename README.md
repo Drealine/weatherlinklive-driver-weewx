@@ -74,11 +74,11 @@ To enable this, set this parameter on [WLLDriver] : ```wind_gust_2min_enable = 1
 
 You can change the default port 80 to set a new port to request to the WLL module. To change to 8080 for example, set this parameter on [WLLDriver] : ```port = 8080```
 
-### Health status of sensors & WLL
+### Health status of ISS & WLL
 
 **/!\ If you disable ```wl_archive_enable = 0```, you will not have the health status.**
 
-WLLDriver recuperate value for health sensor and WLL module each 15 minutes on Weatherlink.com :
+WLLDriver recuperate value for health ISS and WLL module each 15 minutes on Weatherlink.com :
 
 | Parameter        | Type |
 | ------|-----|
