@@ -79,9 +79,7 @@ class WLLDriverAPI():
         device_id = self.api_parameters['device_id']
         self.rain_previous_period = None
         self.udp_countdown = 0
-        self.length_dict_device_id = None
         self.dict_device_id = dict((k, int(v)) for k, v in (e.split(':') for e in device_id.split('-')))
-        self.length_dict_device_id = len(self.dict_device_id)
         self.check_health_time = False
         self.health_timestamp_archive = None
         self.list_iss = ['iss', 'iss+']
