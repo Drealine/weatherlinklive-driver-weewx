@@ -47,9 +47,9 @@ To calculate the time after the driver raise en exception and stop Weewx, do ```
 **/!\ Realtime not work if Weewx is out of your lan network.**
 
 With the WLLDriver, you can enable realtime to retrieve data from wind and rain sensors each 2.5s.<br/>
-If you have enabled ```realtime_enable = 1```, please note that all others sensors would be reach each ```poll_interval```.<br />
+If you have enabled ```realtime_enable = 1```, please note that all others sensors would be reach each ```poll_interval```<br />
 So, make sur that ```poll_interval``` has a number wich is more than 2 * 2.5s. For better use, set ```poll_interval = 10```<br/>
-The temperature or barometer for example does not vary greatly <br/>
+The temperature or barometer for example does not vary greatly.<br/>
 
 ### Retrieve data from Weatherlink.com
 
