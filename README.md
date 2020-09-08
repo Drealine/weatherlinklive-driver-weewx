@@ -8,6 +8,19 @@ Created this driver to make request to WeatherLinkLive module including archive 
 - Install the driver : ```wee_extension --install WLLDriver.zip```
 - Find on **weewx.conf** ```station_type``` and change by this : ```station_type = WLLDriver```
 - If you want to retrieve new data when the driver fail, set ```loop_on_init = True``` on **weewx.conf**
+- Restart weewx : ```service weewx restart```
+
+### Accumulator for rainRate
+
+When install the driver, a parameter is write to the **weewx.conf** :
+```
+[Accumulator]
+      [[rainRate]]
+        extractor = max
+```
+
+Not delete this because this allow the driver
+to set the correct rainRate max each archive interval of Weewx.
 
 ## Configuration on Weewx
 
@@ -19,12 +32,24 @@ The correct syntax for set a parameter is : ```blabla = 1```
 
 - ```max_tries``` - Max tries before Weewx raise an exception and finished the loop.<br />
 - ```retry_wait``` - Time to retry in second between each.<br />
-- ```poll_interval``` - The time to sleep in second between 2 requests. If you have enabled UDP please note that all sensor would be reach each poll_interval.<br />
+- ```poll_interval``` - Time to sleep in second between 2 requests.<br/>
 - ```realtime_enable``` - Enable realtime each 3 secondes for Wind and Rain.<br />
 - ```hostname``` - Set your IP or hostname of WLL module.<br />
-- ```time_out``` - Set this for timeout in second of HTTP and UDP request.<br />
+- ```time_out``` - Set this for timeout in second of HTTP and realtime request.<br />
 - ```device_id``` - Set the ID of your ISS that you've configured on the WLL Module.<br />
 - ```wl_archive_enable``` - Enable retrieve data from Weatherlink.com.<br />
+
+NB : For the driver work good, set ```retry_wait = 2 x poll_interval```. In this case, the driver do not sent a lot of requests.<br/>
+To calculate the time after the driver raise en exception and stop Weewx, do ```max_tries x retry_wait```
+
+### Realtime for wind and rain
+
+**/!\ Realtime not work if Weewx is out of your lan network.**
+
+With the WLLDriver, you can enable realtime to retrieve data from wind and rain sensors each 2.5s.<br/>
+If you have enabled ```realtime_enable = 1```, please note that all others sensors would be reach each ```poll_interval```.<br />
+So, make sur that ```poll_interval``` has a number wich is more than 2 * 2.5s. For better use, set ```poll_interval = 10```<br/>
+The temperature or barometer for example does not vary greatly <br/>
 
 ### Retrieve data from Weatherlink.com
 
@@ -92,7 +117,7 @@ WLLDriver recuperate value for health ISS and WLL module each 15 minutes on Weat
 | Parameter        | Default value      | Min/Max |
 | ------|-----|-----|
 | **max_tries** | 10 | 0/200 |
-| **retry_wait** | 5 | 0/NA	|
+| **retry_wait** | 10 | 0/NA	|
 | **poll_interval** 	| 5 | 0/NA |
 | **realtime_enable** | 0 | 0 = Disable / 1 = Enable |
 | **time_out** | 10 | 0/15 |
