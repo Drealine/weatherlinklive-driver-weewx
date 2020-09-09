@@ -19,7 +19,7 @@ When install the driver, a parameter is write to the **weewx.conf** :
         extractor = max
 ```
 
-Not delete this because this allow the driver
+**Not delete this** because this allow the driver
 to set the correct rainRate max each archive interval of Weewx.
 
 ## Configuration on Weewx
