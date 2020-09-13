@@ -193,36 +193,40 @@ class WLLDriverAPI():
         # Set new dict
         dict_health = {}
 
-        for sensor in self.dict_device_id:
-            for index_json in range(0, len(data_wl['sensors']), 1):
+        try:
+            for sensor in self.dict_device_id:
                 for sensor_type_id in self.dict_sensor_type[sensor]:
-                    for s in data_wl['sensors']:
-                        if s['sensor_type'] == sensor_type_id:
-                            for q in data_wl['sensors'][index_json]['data']:
-                                if 'tx_id' in q and q['tx_id'] == self.dict_device_id[sensor] \
-                                        and q['ts'] == timestamp:
-                                    if 'reception' in q:
-                                        if sensor in self.list_iss:
-                                            dict_health['rxCheckPercent'] = q['reception']
+                    for q in data_wl['sensors']:
+                        if q['sensor_type'] == sensor_type_id:
+                            for pk_sensor in q['data']:
+                                if pk_sensor['tx_id'] == self.dict_device_id[sensor] \
+                                        and pk_sensor['ts'] == timestamp:
+                                    if sensor in self.list_iss:
+                                        dict_health['rxCheckPercent'] = pk_sensor['reception']
 
-                    for s in data_wl['sensors']:
-                        if s['sensor_type'] == 504:
-                            for q in data_wl['sensors'][index_json]['data']:
-                                if q['ts'] == timestamp:
-                                    if 'battery_voltage' in q:
-                                        tmp_battery_voltage = q['battery_voltage']
-                                        if tmp_battery_voltage is not None:
-                                            tmp_battery_voltage = tmp_battery_voltage / 1000
-                                            dict_health['consBatteryVoltage'] = tmp_battery_voltage
-                                    if 'input_voltage' in q:
-                                        tmp_input_voltage = q['input_voltage']
-                                        if tmp_input_voltage is not None:
-                                            tmp_input_voltage = tmp_input_voltage / 1000
-                                            dict_health['supplyVoltage'] = tmp_input_voltage
+                        if q['sensor_type'] == 504:
+                            for pk_sensor in q['data']:
+                                if pk_sensor['ts'] == timestamp:
+                                    tmp_battery_voltage = pk_sensor['battery_voltage']
+                                    if tmp_battery_voltage is not None:
+                                        tmp_battery_voltage = tmp_battery_voltage / 1000
+                                        dict_health['consBatteryVoltage'] = tmp_battery_voltage
 
-        if dict_health is not None and dict_health != {}:
-            logdbg("Health Packet received from Weatherlink.com : {}".format(dict_health))
-            yield dict_health
+                                    tmp_input_voltage = pk_sensor['input_voltage']
+                                    if tmp_input_voltage is not None:
+                                        tmp_input_voltage = tmp_input_voltage / 1000
+                                        dict_health['supplyVoltage'] = tmp_input_voltage
+
+            if dict_health is not None and dict_health != {}:
+                logdbg("Health Packet received from Weatherlink.com : {}".format(dict_health))
+                yield dict_health
+
+        except KeyError as e:
+            logdbg('API Data from Weatherlink health is invalid. Error is : {}. Pass.'.format(e))
+            return
+        except IndexError as e:
+            logdbg('Structure type from Weatherlink health is not valid. Error is : {}. Pass.'.format(e))
+            return
 
     def data_decode_wl(self, data, start_timestamp, end_timestamp):
 
@@ -250,106 +254,77 @@ class WLLDriverAPI():
                 logdbg("Request archive for timestamp : {}".format(start_timestamp))
                 for sensor in self.dict_device_id:
                     check_key = str(sensor)
-                    for index_json in range(0, len(data_wl['sensors']), 1):
-                        for sensor_type_id in self.dict_sensor_type[sensor]:
-                            for s in data_wl['sensors']:
-                                if s['sensor_type'] == sensor_type_id:
-                                    for q in data_wl['sensors'][index_json]['data']:
-                                        if 'tx_id' in q and q['tx_id'] == self.dict_device_id[sensor] \
-                                                and q['ts'] == start_timestamp:
-                                            if 'temp_last' in q:
-                                                if sensor in self.list_iss:
-                                                    wl_packet['outTemp'] = q['temp_last']
-                                                if 'extraTemp' in check_key:
-                                                    extraTemp[sensor] = q['temp_last']
+                    for sensor_type_id in self.dict_sensor_type[sensor]:
+                        for q in data_wl['sensors']:
+                            if q['sensor_type'] == sensor_type_id:
+                                for pk_sensor in q['data']:
+                                    if pk_sensor['tx_id'] == self.dict_device_id[sensor] \
+                                            and pk_sensor['ts'] == start_timestamp:
 
-                                            if 'hum_last' in q:
-                                                if sensor in self.list_iss:
-                                                    wl_packet['outHumidity'] = q['hum_last']
-                                                if 'extraHumid' in check_key:
-                                                    extraHumid[sensor] = q['hum_last']
+                                        if sensor in self.list_iss:
+                                            wl_packet['outTemp'] = pk_sensor['temp_last']
+                                            wl_packet['outHumidity'] = pk_sensor['hum_last']
+                                            wl_packet['rxCheckPercent'] = pk_sensor['reception']
+                                            wl_packet['dewpoint'] = pk_sensor['dew_point_last']
+                                            wl_packet['heatindex'] = pk_sensor['heat_index_last']
+                                            rainSize = pk_sensor['rain_size']
+                                            wl_packet['windchill'] = pk_sensor['wind_chill_last']
+                                            wl_packet['UV'] = pk_sensor['uv_index_avg']
+                                            wl_packet['radiation'] = pk_sensor['solar_rad_avg']
 
-                                            if 'reception' in q:
-                                                if sensor in self.list_iss:
-                                                    wl_packet['rxCheckPercent'] = q['reception']
+                                        if 'extraTemp' in check_key:
+                                            extraTemp[sensor] = pk_sensor['temp_last']
 
-                                            if 'dew_point_last' in q:
-                                                wl_packet['dewpoint'] = q['dew_point_last']
-                                            if 'rain_size' in q:
-                                                rainSize = q['rain_size']
-                                            if 'heat_index_last' in q:
-                                                wl_packet['heatindex'] = q['heat_index_last']
-                                            if 'wind_chill_last' in q:
-                                                wl_packet['windchill'] = q['wind_chill_last']
-                                            if 'uv_index_avg' in q:
-                                                wl_packet['UV'] = q['uv_index_avg']
-                                            if 'solar_rad_avg' in q:
-                                                wl_packet['radiation'] = q['solar_rad_avg']
+                                        if 'extraHumid' in check_key:
+                                            extraHumid[sensor] = pk_sensor['hum_last']
 
-                                            if sensor in self.list_iss or sensor in self.list_anemometer:
-                                                if 'wind_speed_avg' in q:
-                                                    wl_packet['windSpeed'] = q['wind_speed_avg']
-                                                if 'wind_dir_of_prevail' in q:
-                                                    wl_packet['windDir'] = q['wind_dir_of_prevail']
-                                                if 'wind_speed_hi' in q:
-                                                    wl_packet['windGust'] = q['wind_speed_hi']
-                                                if 'wind_speed_hi_dir' in q:
-                                                    wl_packet['windGustDir'] = q['wind_speed_hi_dir']
+                                        if sensor in self.list_iss or sensor in self.list_anemometer:
+                                            wl_packet['windSpeed'] = pk_sensor['wind_speed_avg']
+                                            wl_packet['windDir'] = pk_sensor['wind_dir_of_prevail']
+                                            wl_packet['windGust'] = pk_sensor['wind_speed_hi']
+                                            wl_packet['windGustDir'] = pk_sensor['wind_speed_hi_dir']
 
-                                            if rainSize is not None and rainSize == 1:
-                                                if 'rain_rate_hi_in' in q:
-                                                    wl_packet['rainRate'] = q['rain_rate_hi_in']
-                                                if 'rainfall_in' in q:
-                                                    wl_packet['rain'] = q['rainfall_in']
+                                        if rainSize is not None and rainSize == 1:
+                                            wl_packet['rainRate'] = pk_sensor['rain_rate_hi_in']
+                                            wl_packet['rain'] = pk_sensor['rainfall_in']
 
-                                            if rainSize is not None and rainSize == 2:
-                                                if 'rain_rate_hi_mm' in q:
-                                                    rainRate = q['rain_rate_hi_mm']
-                                                    if rainRate is not None:
-                                                        wl_packet['rainRate'] = rainRate / 25.4
-                                                if 'rainfall_mm' in q:
-                                                    rain = q['rainfall_mm']
-                                                    if rain is not None:
-                                                        wl_packet['rain'] = rain / 25.4
+                                        if rainSize is not None and rainSize == 2:
+                                            rainRate = pk_sensor['rain_rate_hi_mm']
+                                            if rainRate is not None:
+                                                wl_packet['rainRate'] = rainRate / 25.4
 
-                                            # if rainSize == 3:
+                                            rain = pk_sensor['rainfall_mm']
+                                            if rain is not None:
+                                                wl_packet['rain'] = rain / 25.4
 
-                                            # What about this value ? It is not implement on weatherlink.com ?
+                                        # if rainSize == 3:
+                                        # What about this value ? It is not implement on weatherlink.com ?
 
-                            for s in data_wl['sensors']:
-                                if s['sensor_type'] == 242:
-                                    for q in data_wl['sensors'][index_json]['data']:
-                                        if q['ts'] == start_timestamp:
-                                            if 'bar_sea_level' in q:
-                                                wl_packet['barometer'] = q['bar_sea_level']
-                                            if 'bar_absolute' in q:
-                                                wl_packet['pressure'] = q['bar_absolute']
+                            if q['sensor_type'] == 242:
+                                for pk_sensor in q['data']:
+                                    if pk_sensor['ts'] == start_timestamp:
+                                        wl_packet['barometer'] = pk_sensor['bar_sea_level']
+                                        wl_packet['pressure'] = pk_sensor['bar_absolute']
 
-                            for s in data_wl['sensors']:
-                                if s['sensor_type'] == 243:
-                                    for q in data_wl['sensors'][index_json]['data']:
-                                        if q['ts'] == start_timestamp:
-                                            if 'temp_in_last' in q:
-                                                wl_packet['inTemp'] = q['temp_in_last']
-                                            if 'hum_in_last' in q:
-                                                wl_packet['inHumidity'] = q['hum_in_last']
-                                            if 'dew_point_in' in q:
-                                                wl_packet['inDewpoint'] = q['dew_point_in']
+                            if q['sensor_type'] == 243:
+                                for pk_sensor in q['data']:
+                                    if pk_sensor['ts'] == start_timestamp:
+                                        wl_packet['inTemp'] = pk_sensor['temp_in_last']
+                                        wl_packet['inHumidity'] = pk_sensor['hum_in_last']
+                                        wl_packet['inDewpoint'] = pk_sensor['dew_point_in']
 
-                            for s in data_wl['sensors']:
-                                if s['sensor_type'] == 504:
-                                    for q in data_wl['sensors'][index_json]['data']:
-                                        if q['ts'] == start_timestamp:
-                                            if 'battery_voltage' in q:
-                                                tmp_battery_voltage = q['battery_voltage']
-                                                if tmp_battery_voltage is not None:
-                                                    tmp_battery_voltage = tmp_battery_voltage / 1000
-                                                    wl_packet['consBatteryVoltage'] = tmp_battery_voltage
-                                            if 'input_voltage' in q:
-                                                tmp_input_voltage = q['input_voltage']
-                                                if tmp_input_voltage is not None:
-                                                    tmp_input_voltage = tmp_input_voltage / 1000
-                                                    wl_packet['supplyVoltage'] = tmp_input_voltage
+                            if q['sensor_type'] == 504:
+                                for pk_sensor in q['data']:
+                                    if pk_sensor['ts'] == start_timestamp:
+                                        tmp_battery_voltage = pk_sensor['battery_voltage']
+                                        if tmp_battery_voltage is not None:
+                                            tmp_battery_voltage = tmp_battery_voltage / 1000
+                                            wl_packet['consBatteryVoltage'] = tmp_battery_voltage
+
+                                        tmp_input_voltage = pk_sensor['input_voltage']
+                                        if tmp_input_voltage is not None:
+                                            tmp_input_voltage = tmp_input_voltage / 1000
+                                            wl_packet['supplyVoltage'] = tmp_input_voltage
 
                 wl_packet['dateTime'] = start_timestamp if start_timestamp is not None else None
 
@@ -366,7 +341,8 @@ class WLLDriverAPI():
                     yield wl_packet
 
                 else:
-                    raise weewx.WeeWxIOError('No data present in Weatherlink.com packet but request is OK')
+                    logdbg("No data in Weatherlink.com packet")
+                    return
 
         except KeyError as e:
             raise weewx.WeeWxIOError('API Data from Weatherlink is invalid. Error is : {}'.format(e))
@@ -398,107 +374,71 @@ class WLLDriverAPI():
                 check_key = str(sensor)
                 if type_of_packet == 'current_conditions':
                     logdbg('Current conditions received : {}'.format(data))
-                    if 'ts' in data['data']:
-                        wll_packet['dateTime'] = data['data']['ts']
+                    wll_packet['dateTime'] = data['data']['ts']
 
                     for s in data['data']['conditions']:
                         if s['data_structure_type'] == 1:
                             if s['txid'] == self.dict_device_id[sensor]:
-                                if 'temp' in s:
-                                    if sensor in self.list_iss:
-                                        wll_packet['outTemp'] = s['temp']
-                                    if 'extraTemp' in check_key:
-                                        extraTemp[sensor] = s['temp']
-
-                                if 'hum' in s:
-                                    if sensor in self.list_iss:
-                                        wll_packet['outHumidity'] = s['hum']
-                                    if 'extraHumid' in check_key:
-                                        extraHumid[sensor] = s['hum']
-
                                 if sensor in self.list_iss:
-                                    if 'dew_point' in s:
-                                        wll_packet['dewpoint'] = s['dew_point']
-                                    if 'heat_index' in s:
-                                        wll_packet['heatindex'] = s['heat_index']
-                                    if 'wind_chill' in s:
-                                        wll_packet['windchill'] = s['wind_chill']
-                                    if 'trans_battery_flag' in s:
-                                        wll_packet['txBatteryStatus'] = s['trans_battery_flag']
+                                    wll_packet['outTemp'] = s['temp']
+                                    wll_packet['outHumidity'] = s['hum']
+                                    wll_packet['dewpoint'] = s['dew_point']
+                                    wll_packet['heatindex'] = s['heat_index']
+                                    wll_packet['windchill'] = s['wind_chill']
+                                    wll_packet['txBatteryStatus'] = s['trans_battery_flag']
+                                    rainRate = s['rain_rate_last']
+                                    rainFall_Daily = s['rainfall_daily']
+                                    rainSize = s['rain_size']
+                                    wll_packet['UV'] = s['uv_index']
+                                    wll_packet['radiation'] = s['solar_rad']
+
+                                if 'extraTemp' in check_key:
+                                    extraTemp[sensor] = s['temp']
+
+                                if 'extraHumid' in check_key:
+                                    extraHumid[sensor] = s['hum']
 
                                 if sensor in self.list_iss or sensor in self.list_anemometer:
-                                    if 'wind_speed_last' in s:
-                                        wll_packet['windSpeed'] = s['wind_speed_last']
-                                    if 'wind_dir_last' in s:
-                                        wll_packet['windDir'] = s['wind_dir_last']
+                                    wll_packet['windSpeed'] = s['wind_speed_last']
+                                    wll_packet['windDir'] = s['wind_dir_last']
 
                                     if self.api_parameters['wind_gust_2min_enable'] == 0:
-                                        if 'wind_speed_hi_last_10_min' in s:
-                                            wll_packet['windGust'] = s['wind_speed_hi_last_10_min']
-                                        if 'wind_dir_at_hi_speed_last_10_min' in s:
-                                            wll_packet['windGustDir'] = s['wind_dir_at_hi_speed_last_10_min']
+                                        wll_packet['windGust'] = s['wind_speed_hi_last_10_min']
+                                        wll_packet['windGustDir'] = s['wind_dir_at_hi_speed_last_10_min']
 
                                     if self.api_parameters['wind_gust_2min_enable'] == 1:
-                                        if 'wind_speed_hi_last_2_min' in s:
-                                            wll_packet['windGust'] = s['wind_speed_hi_last_2_min']
-                                        if 'wind_dir_at_hi_speed_last_2_min' in s:
-                                            wll_packet['windGustDir'] = s['wind_dir_at_hi_speed_last_2_min']
-
-                                if sensor in self.list_iss:
-                                    if 'rain_rate_last' in s:
-                                        rainRate = s['rain_rate_last']
-                                    if 'rainfall_daily' in s:
-                                        rainFall_Daily = s['rainfall_daily']
-                                    if 'rain_size' in s:
-                                        rainSize = s['rain_size']
-
-                                if sensor in self.list_iss:
-                                    if 'uv_index' in s:
-                                        wll_packet['UV'] = s['uv_index']
-                                    if 'solar_rad' in s:
-                                        wll_packet['radiation'] = s['solar_rad']
+                                        wll_packet['windGust'] = s['wind_speed_hi_last_2_min']
+                                        wll_packet['windGustDir'] = s['wind_dir_at_hi_speed_last_2_min']
 
                         # Next lines are not extra, so no need ID
                         if s['data_structure_type'] == 3:
-                            if 'bar_sea_level' in s:
-                                wll_packet['barometer'] = s['bar_sea_level']
-                            if 'bar_absolute' in s:
-                                wll_packet['pressure'] = s['bar_absolute']
+                            wll_packet['barometer'] = s['bar_sea_level']
+                            wll_packet['pressure'] = s['bar_absolute']
 
                         if s['data_structure_type'] == 4:
-                            if 'temp_in' in s:
-                                wll_packet['inTemp'] = s['temp_in']
-                            if 'hum_in' in s:
-                                wll_packet['inHumidity'] = s['hum_in']
-                            if 'dew_point_in' in s:
-                                wll_packet['inDewpoint'] = s['dew_point_in']
+                            wll_packet['inTemp'] = s['temp_in']
+                            wll_packet['inHumidity'] = s['hum_in']
+                            wll_packet['inDewpoint'] = s['dew_point_in']
 
                 if type_of_packet == 'realtime_broadcast':
                     logdbg('Realtime broadcast received : {}'.format(data))
-                    if 'ts' in data:
-                        udp_wll_packet['dateTime'] = data['ts']
+                    udp_wll_packet['dateTime'] = data['ts']
 
                     for s in data['conditions']:
                         if s['data_structure_type'] == 1:
                             if s['txid'] == self.dict_device_id[sensor]:
                                 if self.api_parameters['realtime_enable'] == 1:
                                     if sensor in self.list_iss or sensor in self.list_anemometer:
-                                        if 'wind_speed_last' in s:
-                                            udp_wll_packet['windSpeed'] = s['wind_speed_last']
-                                        if 'wind_dir_last' in s:
-                                            udp_wll_packet['windDir'] = s['wind_dir_last']
-                                        if 'wind_speed_hi_last_10_min' in s:
-                                            udp_wll_packet['windGust'] = s['wind_speed_hi_last_10_min']
-                                        if 'wind_dir_at_hi_speed_last_10_min' in s:
-                                            udp_wll_packet['windGustDir'] = s['wind_dir_at_hi_speed_last_10_min']
+                                        udp_wll_packet['windSpeed'] = s['wind_speed_last']
+                                        udp_wll_packet['windDir'] = s['wind_dir_last']
+                                        udp_wll_packet['windGust'] = s['wind_speed_hi_last_10_min']
+                                        udp_wll_packet['windGustDir'] = s['wind_dir_at_hi_speed_last_10_min']
 
                                     if sensor in self.list_iss:
-                                        if 'rain_rate_last' in s:
-                                            rainRate = s['rain_rate_last']
-                                        if 'rainfall_daily' in s:
-                                            rainFall_Daily = s['rainfall_daily']
-                                        if 'rain_size' in s:
-                                            rainSize = s['rain_size']
+                                        rainRate = s['rain_rate_last']
+                                        rainFall_Daily = s['rainfall_daily']
+                                        rainSize = s['rain_size']
+
             # Get rain and rainRate
             logdbg("rainFall_Daily set : {}".format(rainFall_Daily))
             if self.rain_previous_period is not None:
@@ -552,7 +492,8 @@ class WLLDriverAPI():
                 logdbg("Final packet return to Weewx : {}".format(_packet))
                 yield _packet
             else:
-                raise weewx.WeeWxIOError('No data in WLL packet but request is OK')
+                logdbg("No data in WLL packet")
+                return
 
         except KeyError as e:
             raise weewx.WeeWxIOError('API Data from WLL Module is invalid. Error is : {}'.format(e))
