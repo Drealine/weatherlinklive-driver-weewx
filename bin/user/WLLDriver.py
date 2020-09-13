@@ -47,7 +47,6 @@ try:
 except ImportError:
     import syslog
 
-
     def logmsg(level, msg):
         syslog.syslog(level, 'WLLDriver: %s:' % msg)
 
@@ -97,7 +96,8 @@ class WLLDriverAPI():
         if 'wl_archive_enable' in self.api_parameters and self.api_parameters['wl_archive_enable'] == 1:
             self.set_time_health_api()
 
-    def round_minutes(self, timestamp, direction, resolution):
+    @staticmethod
+    def round_minutes(timestamp, direction, resolution):
 
         # Function to get last time specify by up or down resolution
         now = datetime.fromtimestamp(timestamp)
@@ -107,7 +107,8 @@ class WLLDriverAPI():
 
         return int(datetime.timestamp(result))
 
-    def request_json_data(self, url, request_timeout, type_of_request):
+    @staticmethod
+    def request_json_data(url, request_timeout, type_of_request):
 
         try:
             http_session = requests.session()
@@ -118,13 +119,13 @@ class WLLDriverAPI():
 
         except requests.Timeout as e:
             if type_of_request == 'HealthAPI':
-                logdbg('Request timeout for HealthAPI, pass.')
+                logerr('Request timeout for HealthAPI, pass.')
                 return
             else:
                 raise weewx.WeeWxIOError('Request timeout from {} : {}'.format(type_of_request, e))
         except requests.RequestException as e:
             if type_of_request == 'HealthAPI':
-                logdbg('Request exception for HealthAPI, pass.')
+                logerr('Request exception for HealthAPI, pass.')
                 return
             else:
                 raise weewx.WeeWxIOError('Request exception from {} : {}'.format(type_of_request, e))
@@ -148,7 +149,7 @@ class WLLDriverAPI():
         if rainFall_Daily is not None and rain_multiplier is not None:
             if self.rain_previous_period is not None:
                 if (rainFall_Daily - self.rain_previous_period) < 0:
-                    logdbg('Not negative number. Set rain to 0. Essentially caused by reset midnight')
+                    logerr('Not negative number. Set rain to 0. Essentially caused by reset midnight')
                     self.rain_previous_period = 0
                     rain = 0
                 else:
@@ -220,12 +221,15 @@ class WLLDriverAPI():
             if dict_health is not None and dict_health != {}:
                 logdbg("Health Packet received from Weatherlink.com : {}".format(dict_health))
                 yield dict_health
+            else:
+                logerr("No data in Weatherlink.com health packet")
+                return
 
         except KeyError as e:
-            logdbg('API Data from Weatherlink health is invalid. Error is : {}. Pass.'.format(e))
+            logerr('API Data from Weatherlink health is invalid. Error is : {}. Pass.'.format(e))
             return
         except IndexError as e:
-            logdbg('Structure type from Weatherlink health is not valid. Error is : {}. Pass.'.format(e))
+            logerr('Structure type from Weatherlink health is not valid. Error is : {}. Pass.'.format(e))
             return
 
     def data_decode_wl(self, data, start_timestamp, end_timestamp):
@@ -341,7 +345,7 @@ class WLLDriverAPI():
                     yield wl_packet
 
                 else:
-                    logdbg("No data in Weatherlink.com packet")
+                    logerr("No data in Weatherlink.com packet")
                     return
 
         except KeyError as e:
@@ -492,7 +496,7 @@ class WLLDriverAPI():
                 logdbg("Final packet return to Weewx : {}".format(_packet))
                 yield _packet
             else:
-                logdbg("No data in WLL packet")
+                logerr("No data in WLL packet")
                 return
 
         except KeyError as e:
@@ -645,7 +649,7 @@ class WLLDriverAPI():
                     return realtime_data
 
             except OSError:
-                logdbg("Failure to get realtime data")
+                logerr("Failure to get realtime data for Wind and Rain")
 
 
 def loader(config_dict, engine):
@@ -682,6 +686,10 @@ class WLLDriver(weewx.drivers.AbstractDevice):
             raise weewx.ViolatedPrecondition("Timeout can't be more than 15 seconds for better use")
         if self.api_parameters['retry_wait'] < self.api_parameters['poll_interval']:
             raise weewx.ViolatedPrecondition("Retry wait must be more than poll interval")
+        if self.api_parameters['retry_wait'] > 600:
+            raise weewx.ViolatedPrecondition("Retry wait must be less than 600 seconds")
+        if self.api_parameters['poll_interval'] > 600:
+            raise weewx.ViolatedPrecondition("Poll interval wait must be less than 600 seconds")
         if self.api_parameters['realtime_enable'] == 1 and self.api_parameters['wind_gust_2min_enable'] == 1:
             raise weewx.ViolatedPrecondition("Wind gust 2min can't be set while realtime is enable")
         if self.api_parameters['hostname'] is None: raise weewx.ViolatedPrecondition("Hostname or IP must be set")
@@ -734,26 +742,20 @@ class WLLDriver(weewx.drivers.AbstractDevice):
 
         if 'wl_archive_enable' in self.api_parameters and self.api_parameters['wl_archive_enable'] == 1:
             # Generate values since good stamp in Weewx database
-            while self.ntries <= 5:
-                try:
-                    now_timestamp_wl = self.WLLDriverAPI.round_minutes(time.time(), 'down',
-                                                                       self.api_parameters['wl_archive_interval'])
-                    # Add 60 seconds timestamp to wait the WLL archive new data
-                    if good_stamp is not None and (good_stamp + 60 < now_timestamp_wl):
-                        for _packet_wl in self.WLLDriverAPI.request_wl(good_stamp, now_timestamp_wl):
-                            yield _packet_wl
-                            good_stamp = time.time() + 0.5
-                            self.ntries = 1
-                    else:
-                        return
+            try:
+                now_timestamp_wl = self.WLLDriverAPI.round_minutes(time.time(), 'down',
+                                                                   self.api_parameters['wl_archive_interval'])
+                # Add 60 seconds timestamp to wait the WLL archive new data
+                if good_stamp is not None and (good_stamp + 60 < now_timestamp_wl):
+                    for _packet_wl in self.WLLDriverAPI.request_wl(good_stamp, now_timestamp_wl):
+                        yield _packet_wl
+                        good_stamp = time.time() + 0.5
+                        self.ntries = 1
+                else:
+                    return
 
-                except weewx.WeeWxIOError as e:
-                    logerr("Failed attempt %d of %d to get loop data in genStartupRecords: %s" %
-                           (self.ntries, 5, e))
-                    self.ntries += 1
-                    time.sleep(self.api_parameters['retry_wait'])
-            else:
-                return
+            except weewx.WeeWxIOError as e:
+                logerr("Failed to get archive records from Weatherlink.com. Please retry later or restart Weewx")
         else:
             return
 
