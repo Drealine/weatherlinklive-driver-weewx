@@ -117,14 +117,14 @@ WLLDriver recuperate value for health ISS and WLL module each 15 minutes on Weat
 | Parameter        | Default value      | Min/Max |
 | ------|-----|-----|
 | **max_tries** | 10 | 0/200 |
-| **retry_wait** | 10 | 0/NA	|
-| **poll_interval** 	| 5 | 0/NA |
+| **retry_wait** | 10 | 0/600	|
+| **poll_interval** 	| 5 | 0/600 |
 | **realtime_enable** | 0 | 0 = Disable / 1 = Enable |
 | **time_out** | 10 | 0/15 |
 | **wl_archive_enable** | 0 | 0 = Disable / 1 = Enable |
-| **device_id** | iss:1 | NA |
-| **wl_archive_interval** | NA | 1, 5 or 15 |
+| **device_id** | iss:1 | Please refer to the chapter extraSensor |
+| **wl_archive_interval** | Not set while user not enable | 1, 5 or 15 |
 | **wind_gust_2min_enable** | Not set so, 0 | 0 = Disable / 1 = Enable |
-| **port** | 80 | NA |
+| **port** | 80 | 0/65535 |
 
 
