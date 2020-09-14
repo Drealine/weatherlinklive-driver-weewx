@@ -623,7 +623,7 @@ class WLLDriverAPI():
                 yield _packet
 
         if type_of_packet == 'realtime_broadcast':
-            data_broadcast = self.get_realtime_broadcast()
+            data_broadcast = self.get_realtime_data()
 
             if data_broadcast is not None:
                 for _packet in self.data_decode_wll(data_broadcast, type_of_packet):
@@ -648,7 +648,7 @@ class WLLDriverAPI():
             except IndexError as e:
                 raise weewx.WeeWxIOError('Error while request realtime. Error is : {}'.format(e))
 
-    def get_realtime_broadcast(self):
+    def get_realtime_data(self):
 
         if self.udp_countdown - self.api_parameters['poll_interval'] > time.time():
             try:
