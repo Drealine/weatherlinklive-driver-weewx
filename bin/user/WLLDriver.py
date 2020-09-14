@@ -792,7 +792,6 @@ class WLLDriver(weewx.drivers.AbstractDevice):
                     while time.time() < timeout_udp_broadcast:
                         for _realtime_packet in self.WLLDriverAPI.request_wll('realtime_broadcast'):
                             yield _realtime_packet
-                            self.ntries = 1
 
             except weewx.WeeWxIOError as e:
                 logerr("Failed attempt %d of %d to get loop data in genLoopPackets: %s" %
