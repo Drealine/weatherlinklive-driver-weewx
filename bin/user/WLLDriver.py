@@ -125,7 +125,7 @@ class WLLDriverAPI():
 
         except requests.Timeout as e:
             if type_of_request == 'HealthAPI':
-                logerr('Timeout error while request HealAPI, Trying next 15min. '
+                logerr('Timeout error while request HealthAPI, Trying next 15min. '
                        'Error is : {}'.format(e))
                 return
             if type_of_request == 'Realtime_broadcast':
@@ -136,7 +136,7 @@ class WLLDriverAPI():
                 raise weewx.WeeWxIOError('Request timeout from {} : Error is {}'.format(type_of_request, e))
         except requests.RequestException as e:
             if type_of_request == 'HealthAPI':
-                logerr('Error while request HealAPI, Trying next 15min. '
+                logerr('Error while request HealthAPI, Trying next 15min. '
                        'Error is : {}'.format(e))
                 return
             if type_of_request == 'Realtime_broadcast':
@@ -242,10 +242,10 @@ class WLLDriverAPI():
                 return
 
         except KeyError as e:
-            logerr('API Data from Weatherlink Health is invalid. Error is : {}. Pass.'.format(e))
+            logerr('API Data from Weatherlink.com Health is invalid. Error is : {}. Pass.'.format(e))
             return
         except IndexError as e:
-            logerr('Structure type from Weatherlink Health is not valid. Error is : {}. Pass.'.format(e))
+            logerr('Structure type from Weatherlink.com Health is not valid. Error is : {}. Pass.'.format(e))
             return
 
     def data_decode_wl(self, data, start_timestamp, end_timestamp):
@@ -365,9 +365,9 @@ class WLLDriverAPI():
                     return
 
         except KeyError as e:
-            raise weewx.WeeWxIOError('API Data from Weatherlink is invalid. Error is : {}'.format(e))
+            raise weewx.WeeWxIOError('API Data from Weatherlink.com is invalid. Error is : {}'.format(e))
         except IndexError as e:
-            raise weewx.WeeWxIOError('Structure type is not valid. Error is : {}'.format(e))
+            raise weewx.WeeWxIOError('Structure type of Weatherlink.com is not valid. Error is : {}'.format(e))
 
     def data_decode_wll(self, data, type_of_packet):
 
