@@ -121,11 +121,17 @@ class WLLDriverAPI():
             if type_of_request == 'HealthAPI':
                 logerr('Request timeout for HealthAPI, pass.')
                 return
+            if type_of_request == 'Realtime_broadcast':
+                logerr('Request timeout for Realtime, pass.')
+                return
             else:
                 raise weewx.WeeWxIOError('Request timeout from {} : {}'.format(type_of_request, e))
         except requests.RequestException as e:
             if type_of_request == 'HealthAPI':
                 logerr('Request exception for HealthAPI, pass.')
+                return
+            if type_of_request == 'Realtime_broadcast':
+                logerr('Request exception for Realtime, pass.')
                 return
             else:
                 raise weewx.WeeWxIOError('Request exception from {} : {}'.format(type_of_request, e))
