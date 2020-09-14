@@ -125,22 +125,26 @@ class WLLDriverAPI():
 
         except requests.Timeout as e:
             if type_of_request == 'HealthAPI':
-                logerr('Request timeout for HealthAPI, pass.')
+                logerr('Timeout error while request HealAPI, Trying next 15min. '
+                       'Error is : {}'.format(e))
                 return
             if type_of_request == 'Realtime_broadcast':
-                logerr('Request timeout for Realtime, pass.')
+                logerr('Timeout error while request realtime to WLL module, Trying after poll interval. '
+                       'Error is : {}'.format(e))
                 return
             else:
-                raise weewx.WeeWxIOError('Request timeout from {} : {}'.format(type_of_request, e))
+                raise weewx.WeeWxIOError('Request timeout from {} : Error is {}'.format(type_of_request, e))
         except requests.RequestException as e:
             if type_of_request == 'HealthAPI':
-                logerr('Request exception for HealthAPI, pass.')
+                logerr('Error while request HealAPI, Trying next 15min. '
+                       'Error is : {}'.format(e))
                 return
             if type_of_request == 'Realtime_broadcast':
-                logerr('Request exception for Realtime, pass.')
+                logerr('Error while request realtime to WLL module, Trying after poll interval. '
+                       'Error is : {}'.format(e))
                 return
             else:
-                raise weewx.WeeWxIOError('Request exception from {} : {}'.format(type_of_request, e))
+                raise weewx.WeeWxIOError('Request exception from {} : Error is : {}'.format(type_of_request, e))
 
     def calculate_rain(self, rainFall_Daily, rainRate, rainSize):
 
