@@ -38,8 +38,10 @@ try:
     def logdbg(msg):
         log.debug(msg)
 
+
     def loginf(msg):
         log.info(msg)
+
 
     def logerr(msg):
         log.error(msg)
@@ -47,14 +49,18 @@ try:
 except ImportError:
     import syslog
 
+
     def logmsg(level, msg):
         syslog.syslog(level, 'WLLDriver: %s:' % msg)
+
 
     def logdbg(msg):
         logmsg(syslog.LOG_DEBUG, msg)
 
+
     def loginf(msg):
         logmsg(syslog.LOG_INFO, msg)
+
 
     def logerr(msg):
         logmsg(syslog.LOG_ERR, msg)
@@ -115,7 +121,7 @@ class WLLDriverAPI():
             json_data = http_session.get(url, timeout=request_timeout)
 
             if json_data is not None:
-                return json_data.json()
+                yield json_data.json()
 
         except requests.Timeout as e:
             if type_of_request == 'HealthAPI':
@@ -534,8 +540,8 @@ class WLLDriverAPI():
             hashlib.sha256
         ).hexdigest()
 
-        url_wlapiv2 = "https://api.weatherlink.com/v2/historic/{}?api-key={}&t={}"\
-                      "&start-timestamp={}&end-timestamp={}&api-signature={}"\
+        url_wlapiv2 = "https://api.weatherlink.com/v2/historic/{}?api-key={}&t={}" \
+                      "&start-timestamp={}&end-timestamp={}&api-signature={}" \
             .format(parameters["station-id"], parameters["api-key"], parameters["t"], parameters["start-timestamp"],
                     parameters["end-timestamp"], apiSignature)
 
@@ -575,10 +581,9 @@ class WLLDriverAPI():
         # Function to request health archive from Weatherlink.com
         url_apiv2_wl = self.WLAPIv2(start_timestamp, end_timestamp)
         logdbg("URL API Weatherlink : {} ".format(url_apiv2_wl))
-        data_wl = self.request_json_data(url_apiv2_wl, self.api_parameters['time_out'], 'HealthAPI')
-
-        for _packet in self.data_decode_health_wl(data_wl, end_timestamp):
-            yield _packet
+        for data_wl in self.request_json_data(url_apiv2_wl, self.api_parameters['time_out'], 'HealthAPI'):
+            for _packet in self.data_decode_health_wl(data_wl, end_timestamp):
+                yield _packet
 
     def request_wl(self, start_timestamp, end_timestamp):
 
@@ -607,25 +612,22 @@ class WLLDriverAPI():
                 url_apiv2_wl = self.WLAPIv2(archive_interval[index_start_timestamp],
                                             archive_interval[index_end_timestamp])
                 logdbg("URL API Weatherlink : {} ".format(url_apiv2_wl))
-                data_wl = self.request_json_data(url_apiv2_wl, self.api_parameters['time_out'], 'Weatherlink.com')
-
-                for _packet in self.data_decode_wl(data_wl, archive_interval[index_start_timestamp],
-                                                   archive_interval[index_end_timestamp]):
-                    yield _packet
+                for data_wl in self.request_json_data(url_apiv2_wl,
+                                                      self.api_parameters['time_out'], 'Weatherlink.com'):
+                    for _packet in self.data_decode_wl(data_wl, archive_interval[index_start_timestamp],
+                                                       archive_interval[index_end_timestamp]):
+                        yield _packet
 
     def request_wll(self, type_of_packet):
 
         if type_of_packet == 'current_conditions':
-            wll_packet = self.request_json_data(self.url_current_conditions, self.api_parameters['time_out'],
-                                                type_of_packet)
-
-            for _packet in self.data_decode_wll(wll_packet, type_of_packet):
-                yield _packet
+            for wll_packet in self.request_json_data(self.url_current_conditions, self.api_parameters['time_out'],
+                                                     type_of_packet):
+                for _packet in self.data_decode_wll(wll_packet, type_of_packet):
+                    yield _packet
 
         if type_of_packet == 'realtime_broadcast':
-            data_broadcast = self.get_realtime_data()
-
-            if data_broadcast is not None:
+            for data_broadcast in self.get_realtime_data():
                 for _packet in self.data_decode_wll(data_broadcast, type_of_packet):
                     yield _packet
 
@@ -634,14 +636,10 @@ class WLLDriverAPI():
         if self.udp_countdown - self.api_parameters['poll_interval'] < time.time():
 
             try:
-                rb = self.request_json_data(self.url_realtime_broadcast, self.api_parameters['time_out'],
-                                            'Realtime_broadcast')
-
-                if rb['data'] is not None:
+                for rb in self.request_json_data(self.url_realtime_broadcast, self.api_parameters['time_out'],
+                                                 'Realtime_broadcast'):
                     self.udp_countdown = time.time() + rb['data']['duration']
                     return
-                else:
-                    logerr("Request realtime has failed. Try after poll interval")
 
             except KeyError as e:
                 raise weewx.WeeWxIOError('Error while request realtime. Error is  {}'.format(e))
@@ -656,7 +654,7 @@ class WLLDriverAPI():
                 realtime_data = json.loads(data.decode("utf-8"))
 
                 if realtime_data is not None:
-                    return realtime_data
+                    yield realtime_data
 
             except OSError:
                 logerr("Failure to get realtime data for Wind and Rain")
