@@ -528,7 +528,7 @@ class WLLDriverAPI():
             hashlib.sha256
         ).hexdigest()
 
-        url_wlapiv2 = "https://api.weatherlink.com/v2/historic/{}?api-key={}&t={}" \
+        url_wlapiv2 = "https://api.weatherlink.com/v2/historic/{}?api-key={}&t={}"\
                       "&start-timestamp={}&end-timestamp={}&api-signature={}"\
             .format(parameters["station-id"], parameters["api-key"], parameters["t"], parameters["start-timestamp"],
                     parameters["end-timestamp"], apiSignature)
@@ -637,6 +637,8 @@ class WLLDriverAPI():
             if rb['data'] is not None:
                 self.udp_countdown = time.time() + rb['data']['duration']
                 return
+            else:
+                logerr("Request realtime has failed. Try after poll interval")
 
     def get_realtime_broadcast(self):
 
