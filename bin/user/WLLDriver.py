@@ -553,8 +553,7 @@ class WLLDriverAPI():
                                                          (self.api_parameters['wl_archive_interval'] * 60),
                                                          self.health_timestamp_archive):
                 logdbg("Health conditions packet received : {}".format(_health_packet))
-                if _health_packet is not None:
-                    yield _health_packet
+                yield _health_packet
 
             # Set values to False and None to prevent block code on current_conditions same that URL is None
             self.check_health_time = False
@@ -579,8 +578,7 @@ class WLLDriverAPI():
         data_wl = self.request_json_data(url_apiv2_wl, self.api_parameters['time_out'], 'HealthAPI')
 
         for _packet in self.data_decode_health_wl(data_wl, end_timestamp):
-            if _packet is not None:
-                yield _packet
+            yield _packet
 
     def request_wl(self, start_timestamp, end_timestamp):
 
@@ -613,8 +611,7 @@ class WLLDriverAPI():
 
                 for _packet in self.data_decode_wl(data_wl, archive_interval[index_start_timestamp],
                                                    archive_interval[index_end_timestamp]):
-                    if _packet is not None:
-                        yield _packet
+                    yield _packet
 
     def request_wll(self, type_of_packet):
 
@@ -623,16 +620,14 @@ class WLLDriverAPI():
                                                 type_of_packet)
 
             for _packet in self.data_decode_wll(wll_packet, type_of_packet):
-                if _packet is not None:
-                    yield _packet
+                yield _packet
 
         if type_of_packet == 'realtime_broadcast':
             data_broadcast = self.get_realtime_broadcast()
 
             if data_broadcast is not None:
                 for _packet in self.data_decode_wll(data_broadcast, type_of_packet):
-                    if _packet is not None:
-                        yield _packet
+                    yield _packet
 
     def request_realtime_broadcast(self):
 
