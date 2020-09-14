@@ -232,10 +232,10 @@ class WLLDriverAPI():
                 return
 
         except KeyError as e:
-            logerr('API Data from Weatherlink health is invalid. Error is : {}. Pass.'.format(e))
+            logerr('API Data from Weatherlink Health is invalid. Error is : {}. Pass.'.format(e))
             return
         except IndexError as e:
-            logerr('Structure type from Weatherlink health is not valid. Error is : {}. Pass.'.format(e))
+            logerr('Structure type from Weatherlink Health is not valid. Error is : {}. Pass.'.format(e))
             return
 
     def data_decode_wl(self, data, start_timestamp, end_timestamp):
@@ -632,14 +632,21 @@ class WLLDriverAPI():
     def request_realtime_broadcast(self):
 
         if self.udp_countdown - self.api_parameters['poll_interval'] < time.time():
-            rb = self.request_json_data(self.url_realtime_broadcast, self.api_parameters['time_out'],
-                                        'Realtime_broadcast')
 
-            if rb['data'] is not None:
-                self.udp_countdown = time.time() + rb['data']['duration']
-                return
-            else:
-                logerr("Request realtime has failed. Try after poll interval")
+            try:
+                rb = self.request_json_data(self.url_realtime_broadcast, self.api_parameters['time_out'],
+                                            'Realtime_broadcast')
+
+                if rb['data'] is not None:
+                    self.udp_countdown = time.time() + rb['data']['duration']
+                    return
+                else:
+                    logerr("Request realtime has failed. Try after poll interval")
+
+            except KeyError as e:
+                raise weewx.WeeWxIOError('Error while request realtime. Error is  {}'.format(e))
+            except IndexError as e:
+                raise weewx.WeeWxIOError('Error while request realtime. Error is : {}'.format(e))
 
     def get_realtime_broadcast(self):
 
