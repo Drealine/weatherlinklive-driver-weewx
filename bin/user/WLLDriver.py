@@ -195,7 +195,7 @@ class WLLDriverAPI():
                 yield data.json()
 
         except requests.HTTPError as e:
-            if type_of_request == "Realtime_broadcast" or type_of_request == "HealthAPI":
+            if type_of_request == 'HealthAPI' or type_of_request == 'Realtime_broadcast':
                 logerr("Error while request HTTP [{}]. Error is : {}".format
                        (type_of_request, e))
             else:
