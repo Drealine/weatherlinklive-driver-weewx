@@ -155,11 +155,14 @@ class WLLDriverAPI():
                 raise weewx.WeeWxIOError('Request exception from {} : Error is : {}'.format(type_of_request, e))
 
     @staticmethod
-    def get_time_from_timestamp(self, ts):
+    def dtlog_from_ts(self, ts):
 
         if ts is not None:
             dt = datetime.fromtimestamp(ts)
-            return dt.strftime("%m/%d/%Y - %H:%M:%S") if dt is not None else None
+            str_dt = dt.strftime("%m/%d/%Y - %H:%M:%S") if dt is not None else None
+            if str_dt is not None:
+                logstr_dt = "Time of packet - [{}] : "
+                return logstr_dt if logstr_dt is not None else None
 
     def calculate_rain(self, rainFall_Daily, rainRate, rainSize):
 
@@ -219,14 +222,14 @@ class WLLDriverAPI():
     def data_decode_wl_health(self, data, timestamp):
 
         # Function to decode health data from Weatherlink.com
+
+        # Copy json data to new value
+        data_wl = data
+        # Set new dict
+        dict_health = {}
+        dtlog_from_ts = self.dtlog_from_ts(timestamp)
+
         try:
-
-            # Copy json data to new value
-            data_wl = data
-            # Set new dict
-            dict_health = {}
-            dt_from_ts = self.get_time_from_timestamp(timestamp)
-
             for sensor in self.dict_device_id:
                 for sensor_type_id in self.dict_sensor_type[sensor]:
                     for q in data_wl['sensors']:
@@ -251,47 +254,48 @@ class WLLDriverAPI():
                                         dict_health['supplyVoltage'] = tmp_input_voltage
 
             if dict_health is not None and dict_health != {}:
-                logdbg("Time of packet - [{}] : Health Packet received from Weatherlink.com :"
-                       " {}".format(dt_from_ts, dict_health))
+                logdbg(dtlog_from_ts + "Health Packet received from Weatherlink.com :"
+                       " {}".format(dict_health))
                 yield dict_health
             else:
-                logerr("Time of packet - [{}] : No data in Weatherlink.com health packet".format(dt_from_ts))
+                logerr(dtlog_from_ts + "No data in Weatherlink.com health packet")
                 return
 
         except KeyError as e:
-            logerr('Time of packet - [{}] : API Data from Weatherlink.com Health is invalid. '
-                   'Error is : {}. Pass.'.format(dt_from_ts, e))
+            logerr(dtlog_from_ts + 'API Data from Weatherlink.com Health is invalid. '
+                   'Error is : {}. Pass.'.format(e))
             return
         except IndexError as e:
-            logerr('Time of packet - [{}] : structure type from Weatherlink.com Health is not valid. '
-                   'Error is : {}. Pass.'.format(dt_from_ts, e))
+            logerr(dtlog_from_ts + 'Structure type from Weatherlink.com Health is not valid. '
+                   'Error is : {}. Pass.'.format(e))
             return
 
     def data_decode_wl(self, data, start_timestamp, end_timestamp):
 
         # Function to decode data from Weatherlink.com
+
+        # Copy json data to new value
+        data_wl = data
+
+        # Set dict
+        wl_packet = {'dateTime': None,
+                     'usUnits': weewx.US,
+                     'interval': self.api_parameters['wl_archive_interval'],
+                     }
+        extraTemp = {}
+        extraHumid = {}
+
+        # Set values to None
+        rainSize = None
+        dtlog_from_ts = None
+
+        # Calculate timestamp from start
+        start_timestamp = int(start_timestamp + (60 * int(self.api_parameters['wl_archive_interval'])))
+
         try:
-            # Copy json data to new value
-            data_wl = data
-
-            # Set dict
-            wl_packet = {'dateTime': None,
-                         'usUnits': weewx.US,
-                         'interval': self.api_parameters['wl_archive_interval'],
-                         }
-            extraTemp = {}
-            extraHumid = {}
-
-            # Set values to None
-            rainSize = None
-            dt_from_ts = None
-
-            # Calculate timestamp from start
-            start_timestamp = int(start_timestamp + (60 * int(self.api_parameters['wl_archive_interval'])))
-
             while start_timestamp <= end_timestamp:
                 logdbg("Request archive for timestamp : {}".format(start_timestamp))
-                dt_from_ts = self.get_time_from_timestamp(start_timestamp)
+                dtlog_from_ts = self.get_time_from_timestamp(start_timestamp)
                 for sensor in self.dict_device_id:
                     check_key = str(sensor)
                     for sensor_type_id in self.dict_sensor_type[sensor]:
@@ -376,21 +380,21 @@ class WLLDriverAPI():
                         wl_packet.update(extraHumid)
 
                 if wl_packet is not None and wl_packet['dateTime'] is not None:
-                    logdbg("Time of packet - [{}] : Packet received from Weatherlink.com : {}".format
-                           (dt_from_ts, wl_packet))
+                    logdbg(dtlog_from_ts + "Packet received from Weatherlink.com : {}".format
+                           (wl_packet))
                     start_timestamp = int(start_timestamp + (60 * int(self.api_parameters['wl_archive_interval'])))
                     yield wl_packet
 
                 else:
-                    logerr("Time of packet - [{}] : No data in Weatherlink.com packet".format(dt_from_ts))
+                    logerr(dtlog_from_ts + "No data in Weatherlink.com packet")
                     return
 
         except KeyError as e:
-            raise weewx.WeeWxIOError('Time of packet - [{}] : API Data from Weatherlink.com is invalid. '
-                                     'Error is : {}'.format(dt_from_ts, e))
+            raise weewx.WeeWxIOError(dtlog_from_ts + 'API Data from Weatherlink.com is invalid. '
+                                     'Error is : {}'.format(e))
         except IndexError as e:
-            raise weewx.WeeWxIOError('Time of packet - [{}] : Structure type of Weatherlink.com is not valid. '
-                                     'Error is : {}'.format(dt_from_ts, e))
+            raise weewx.WeeWxIOError(dtlog_from_ts + 'Structure type of Weatherlink.com is not valid. '
+                                     'Error is : {}'.format(e))
 
     def data_decode_wll(self, data, type_of_packet):
 
