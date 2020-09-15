@@ -120,8 +120,16 @@ class WLLDriverAPI():
             http_session = requests.session()
             json_data = http_session.get(url, timeout=request_timeout)
 
-            if json_data is not None:
-                yield json_data.json()
+            if json_data.status_code == 200:
+                if json_data is not None:
+                    yield json_data.json()
+            else:
+                if type_of_request == "Realtime_broadcast" or type_of_request == "HealthAPI":
+                    logerr("Error while request HTTP '{}'. Error code is : {}".format
+                           (type_of_request, json_data.status_code))
+                else:
+                    raise weewx.WeeWxIOError("Error while request HTTP '{}'. Error code is : {}".format
+                                             (type_of_request, json_data.status_code))
 
         except requests.Timeout as e:
             if type_of_request == 'HealthAPI':
