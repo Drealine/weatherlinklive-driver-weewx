@@ -216,7 +216,7 @@ class WLLDriverAPI():
 
         return rain, rainRate
 
-    def data_decode_health_wl(self, data, timestamp):
+    def data_decode_wl_health(self, data, timestamp):
 
         # Function to decode health data from Weatherlink.com
         try:
@@ -609,7 +609,7 @@ class WLLDriverAPI():
         url_apiv2_wl = self.WLAPIv2(start_timestamp, end_timestamp)
         logdbg("URL API Weatherlink : {} ".format(url_apiv2_wl))
         for data_wl in self.request_json_data(url_apiv2_wl, self.api_parameters['time_out'], 'HealthAPI'):
-            for _packet in self.data_decode_health_wl(data_wl, end_timestamp):
+            for _packet in self.data_decode_wl_health(data_wl, end_timestamp):
                 yield _packet
 
     def request_wl(self, start_timestamp, end_timestamp):
