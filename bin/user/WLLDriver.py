@@ -468,7 +468,7 @@ class WLLDriverAPI():
                         wl_packet.update(extraHumid)
 
                 if wl_packet is not None and wl_packet['dateTime'] is not None:
-                    loginf("Weewx packet from Weatherlink.com : {}".format(wl_packet))
+                    loginf("Archive Weewx from Weatherlink.com : {}".format(wl_packet))
                     start_timestamp = int(start_timestamp + (60 * int(self.api_parameters['wl_archive_interval'])))
                     yield wl_packet
 
@@ -668,7 +668,7 @@ class WLLDriverAPI():
             after_time = time.time() + 120
             if _packet is not None and _packet['dateTime'] is not None and \
                     before_time <= _packet['dateTime'] <= after_time:
-                loginf("Weewx packet from WLL module: {}".format(_packet))
+                loginf("Weewx packet from WLL module : {}".format(_packet))
                 yield _packet
             else:
                 logerr("No data in WLL packet")
