@@ -270,8 +270,6 @@ class WLLDriverAPI():
     def data_decode_wl(self, data, start_timestamp, end_timestamp):
 
         # Function to decode data from Weatherlink.com
-
-        global dt_from_ts
         try:
             # Copy json data to new value
             data_wl = data
