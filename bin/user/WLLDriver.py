@@ -646,9 +646,9 @@ class WLLDriverAPI():
                     return
 
             except KeyError as e:
-                raise weewx.WeeWxIOError('Error while request realtime. Error is  {}'.format(e))
+                logerr('Error while request realtime. Error is  {}'.format(e))
             except IndexError as e:
-                raise weewx.WeeWxIOError('Error while request realtime. Error is : {}'.format(e))
+                logerr('Error while request realtime. Error is : {}'.format(e))
 
     def get_realtime_data(self):
 
