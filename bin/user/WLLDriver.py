@@ -219,14 +219,14 @@ class WLLDriverAPI():
     def data_decode_health_wl(self, data, timestamp):
 
         # Function to decode health data from Weatherlink.com
-
-        # Copy json data to new value
-        data_wl = data
-        # Set new dict
-        dict_health = {}
-        dt_from_ts = self.get_time_from_timestamp(timestamp)
-
         try:
+
+            # Copy json data to new value
+            data_wl = data
+            # Set new dict
+            dict_health = {}
+            dt_from_ts = self.get_time_from_timestamp(timestamp)
+
             for sensor in self.dict_device_id:
                 for sensor_type_id in self.dict_sensor_type[sensor]:
                     for q in data_wl['sensors']:
