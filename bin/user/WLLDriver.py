@@ -154,19 +154,6 @@ class WLLDriverAPI():
             else:
                 raise weewx.WeeWxIOError('Request exception from {} : Error is : {}'.format(type_of_request, e))
 
-<<<<<<< HEAD
-    @staticmethod
-    def dtlog_from_ts(self, ts):
-
-        if ts is not None:
-            dt = datetime.fromtimestamp(ts)
-            str_dt = dt.strftime("%m/%d/%Y - %H:%M:%S") if dt is not None else None
-            if str_dt is not None:
-                logstr_dt = "Time of packet - [{}] : "
-                return logstr_dt if logstr_dt is not None else None
-
-=======
->>>>>>> parent of c9c3a5b... Added timestamp in log for function which have already timestamp define
     def calculate_rain(self, rainFall_Daily, rainRate, rainSize):
 
         # Set values to None to prevent no declaration
@@ -222,7 +209,7 @@ class WLLDriverAPI():
 
         return rain, rainRate
 
-    def data_decode_wl_health(self, data, timestamp):
+    def data_decode_health_wl(self, data, timestamp):
 
         # Function to decode health data from Weatherlink.com
 
@@ -230,10 +217,6 @@ class WLLDriverAPI():
         data_wl = data
         # Set new dict
         dict_health = {}
-<<<<<<< HEAD
-        dtlog_from_ts = self.dtlog_from_ts(timestamp)
-=======
->>>>>>> parent of c9c3a5b... Added timestamp in log for function which have already timestamp define
 
         try:
             for sensor in self.dict_device_id:
@@ -260,22 +243,6 @@ class WLLDriverAPI():
                                         dict_health['supplyVoltage'] = tmp_input_voltage
 
             if dict_health is not None and dict_health != {}:
-<<<<<<< HEAD
-                logdbg(dtlog_from_ts + "Health Packet received from Weatherlink.com :"
-                       " {}".format(dict_health))
-                yield dict_health
-            else:
-                logerr(dtlog_from_ts + "No data in Weatherlink.com health packet")
-                return
-
-        except KeyError as e:
-            logerr(dtlog_from_ts + 'API Data from Weatherlink.com Health is invalid. '
-                   'Error is : {}. Pass.'.format(e))
-            return
-        except IndexError as e:
-            logerr(dtlog_from_ts + 'Structure type from Weatherlink.com Health is not valid. '
-                   'Error is : {}. Pass.'.format(e))
-=======
                 logdbg("Health Packet received from Weatherlink.com : {}".format(dict_health))
                 yield dict_health
             else:
@@ -287,49 +254,32 @@ class WLLDriverAPI():
             return
         except IndexError as e:
             logerr('Structure type from Weatherlink.com Health is not valid. Error is : {}. Pass.'.format(e))
->>>>>>> parent of c9c3a5b... Added timestamp in log for function which have already timestamp define
             return
 
     def data_decode_wl(self, data, start_timestamp, end_timestamp):
 
         # Function to decode data from Weatherlink.com
 
-<<<<<<< HEAD
-        # Copy json data to new value
-        data_wl = data
-=======
         try:
             # Copy json data to new value
             data_wl = data
->>>>>>> parent of c9c3a5b... Added timestamp in log for function which have already timestamp define
 
-        # Set dict
-        wl_packet = {'dateTime': None,
-                     'usUnits': weewx.US,
-                     'interval': self.api_parameters['wl_archive_interval'],
-                     }
-        extraTemp = {}
-        extraHumid = {}
+            # Set dict
+            wl_packet = {'dateTime': None,
+                         'usUnits': weewx.US,
+                         'interval': self.api_parameters['wl_archive_interval'],
+                         }
+            extraTemp = {}
+            extraHumid = {}
 
-<<<<<<< HEAD
-        # Set values to None
-        rainSize = None
-        dtlog_from_ts = None
-=======
             # Set values to None
             rainSize = None
->>>>>>> parent of c9c3a5b... Added timestamp in log for function which have already timestamp define
 
-        # Calculate timestamp from start
-        start_timestamp = int(start_timestamp + (60 * int(self.api_parameters['wl_archive_interval'])))
+            # Calculate timestamp from start
+            start_timestamp = int(start_timestamp + (60 * int(self.api_parameters['wl_archive_interval'])))
 
-        try:
             while start_timestamp <= end_timestamp:
                 logdbg("Request archive for timestamp : {}".format(start_timestamp))
-<<<<<<< HEAD
-                dtlog_from_ts = self.get_time_from_timestamp(start_timestamp)
-=======
->>>>>>> parent of c9c3a5b... Added timestamp in log for function which have already timestamp define
                 for sensor in self.dict_device_id:
                     check_key = str(sensor)
                     for sensor_type_id in self.dict_sensor_type[sensor]:
@@ -414,27 +364,11 @@ class WLLDriverAPI():
                         wl_packet.update(extraHumid)
 
                 if wl_packet is not None and wl_packet['dateTime'] is not None:
-<<<<<<< HEAD
-                    logdbg(dtlog_from_ts + "Packet received from Weatherlink.com : {}".format
-                           (wl_packet))
-=======
                     logdbg("Packet received from Weatherlink.com : {}".format(wl_packet))
->>>>>>> parent of c9c3a5b... Added timestamp in log for function which have already timestamp define
                     start_timestamp = int(start_timestamp + (60 * int(self.api_parameters['wl_archive_interval'])))
                     yield wl_packet
 
                 else:
-<<<<<<< HEAD
-                    logerr(dtlog_from_ts + "No data in Weatherlink.com packet")
-                    return
-
-        except KeyError as e:
-            raise weewx.WeeWxIOError(dtlog_from_ts + 'API Data from Weatherlink.com is invalid. '
-                                     'Error is : {}'.format(e))
-        except IndexError as e:
-            raise weewx.WeeWxIOError(dtlog_from_ts + 'Structure type of Weatherlink.com is not valid. '
-                                     'Error is : {}'.format(e))
-=======
                     logerr("No data in Weatherlink.com packet")
                     return
 
@@ -442,7 +376,6 @@ class WLLDriverAPI():
             raise weewx.WeeWxIOError('API Data from Weatherlink.com is invalid. Error is : {}'.format(e))
         except IndexError as e:
             raise weewx.WeeWxIOError('Structure type of Weatherlink.com is not valid. Error is : {}'.format(e))
->>>>>>> parent of c9c3a5b... Added timestamp in log for function which have already timestamp define
 
     def data_decode_wll(self, data, type_of_packet):
 
@@ -661,7 +594,7 @@ class WLLDriverAPI():
         url_apiv2_wl = self.WLAPIv2(start_timestamp, end_timestamp)
         logdbg("URL API Weatherlink : {} ".format(url_apiv2_wl))
         for data_wl in self.request_json_data(url_apiv2_wl, self.api_parameters['time_out'], 'HealthAPI'):
-            for _packet in self.data_decode_wl_health(data_wl, end_timestamp):
+            for _packet in self.data_decode_health_wl(data_wl, end_timestamp):
                 yield _packet
 
     def request_wl(self, start_timestamp, end_timestamp):
