@@ -189,7 +189,7 @@ class WLLDriverAPI():
             http_session = requests.session()
             data = http_session.get(url, timeout=request_timeout)
 
-            data.raise_for_status()
+            data.raise_for_status()  # Attempt to raise if request has for example 404 error. It will raise an HTTPError
 
             if data is not None:
                 yield data.json()
