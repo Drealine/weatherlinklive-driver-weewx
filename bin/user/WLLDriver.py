@@ -363,25 +363,24 @@ class WLLDriverAPI():
     def data_decode_wl(self, data, start_timestamp, end_timestamp):
 
         # Function to decode data from Weatherlink.com
+        # Copy json data to new value
+        data_wl = data
+
+        # Set dict
+        wl_packet = {'dateTime': None,
+                     'usUnits': weewx.US,
+                     'interval': self.api_parameters['wl_archive_interval'],
+                     }
+        extraTemp = {}
+        extraHumid = {}
+
+        # Set values to None
+        rainSize = None
+
+        # Calculate timestamp from start
+        start_timestamp = int(start_timestamp + (60 * int(self.api_parameters['wl_archive_interval'])))
 
         try:
-            # Copy json data to new value
-            data_wl = data
-
-            # Set dict
-            wl_packet = {'dateTime': None,
-                         'usUnits': weewx.US,
-                         'interval': self.api_parameters['wl_archive_interval'],
-                         }
-            extraTemp = {}
-            extraHumid = {}
-
-            # Set values to None
-            rainSize = None
-
-            # Calculate timestamp from start
-            start_timestamp = int(start_timestamp + (60 * int(self.api_parameters['wl_archive_interval'])))
-
             while start_timestamp <= end_timestamp:
                 logdbg("Request archive for timestamp : {}".format(start_timestamp))
                 for sensor in self.dict_device_id:
@@ -531,24 +530,24 @@ class WLLDriverAPI():
     def data_decode_wll(self, data, type_of_packet):
 
         # Function to decode data from WLL module
-        try:
-            # Set dict
-            wll_packet = {'dateTime': None,
+        # Set dict
+        wll_packet = {'dateTime': None,
+                      'usUnits': weewx.US,
+                      }
+        udp_wll_packet = {'dateTime': None,
                           'usUnits': weewx.US,
                           }
-            udp_wll_packet = {'dateTime': None,
-                              'usUnits': weewx.US,
-                              }
-            extraTemp = {}
-            extraHumid = {}
-            add_current_rain = {}
+        extraTemp = {}
+        extraHumid = {}
+        add_current_rain = {}
 
-            # Set values to None
-            _packet = None
-            rainFall_Daily = None
-            rainRate = None
-            rainSize = None
+        # Set values to None
+        _packet = None
+        rainFall_Daily = None
+        rainRate = None
+        rainSize = None
 
+        try:
             for sensor in self.dict_device_id:
                 check_key = str(sensor)
                 if type_of_packet == 'current_conditions':
