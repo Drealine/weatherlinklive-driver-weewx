@@ -856,7 +856,6 @@ if __name__ == "__main__":
     def test_driver():
         import weeutil.weeutil
         driver = WLLDriver()
-        print("testing driver")
         for pkt in driver.genLoopPackets():
             print((weeutil.weeutil.timestamp_to_string(pkt['dateTime']), pkt))
 
