@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 DRIVER_NAME = "WLLDriver"
-DRIVER_VERSION = "0.4"
+DRIVER_VERSION = "0.3"
 
 import json
 import requests
