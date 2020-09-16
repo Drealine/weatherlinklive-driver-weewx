@@ -125,6 +125,6 @@ WLLDriver recuperate value for health ISS and WLL module each 15 minutes on Weat
 | **device_id** | iss:1 | Please refer to the chapter extraSensor |
 | **wl_archive_interval** | User need to set manually | 1, 5 or 15 |
 | **wind_gust_2min_enable** | Not set so, 0 | 0 = Disable / 1 = Enable |
-| **port** | 80 | 0/65535 |
+| **port** | 80 | 1/65535 |
 
 
