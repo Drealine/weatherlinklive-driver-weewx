@@ -398,10 +398,10 @@ class WLLDriverAPI():
                                             wl_packet['rxCheckPercent'] = pk_sensor['reception']
                                             wl_packet['dewpoint'] = pk_sensor['dew_point_last']
                                             wl_packet['heatindex'] = pk_sensor['heat_index_last']
-                                            rainSize = pk_sensor['rain_size']
                                             wl_packet['windchill'] = pk_sensor['wind_chill_last']
                                             wl_packet['UV'] = pk_sensor['uv_index_avg']
                                             wl_packet['radiation'] = pk_sensor['solar_rad_avg']
+                                            wl_packet['rain'] = pk_sensor['rainfall_in']
 
                                         if 'extraTemp' in check_key:
                                             extraTemp[sensor] = pk_sensor['temp_last']
@@ -414,23 +414,7 @@ class WLLDriverAPI():
                                             wl_packet['windDir'] = pk_sensor['wind_dir_of_prevail']
                                             wl_packet['windGust'] = pk_sensor['wind_speed_hi']
                                             wl_packet['windGustDir'] = pk_sensor['wind_speed_hi_dir']
-
-                                        if rainSize is not None and rainSize == 1:
-                                            wl_packet['rainRate'] = pk_sensor['rain_rate_hi_in']
-                                            wl_packet['rain'] = pk_sensor['rainfall_in']
-
-                                        if rainSize is not None and rainSize == 2:
-                                            rainRate = pk_sensor['rain_rate_hi_mm']
-                                            if rainRate is not None:
-                                                wl_packet['rainRate'] = rainRate / 25.4
-
-                                            rain = pk_sensor['rainfall_mm']
-                                            if rain is not None:
-                                                wl_packet['rain'] = rain / 25.4
-
-                                        # if rainSize == 3:
-                                        # What about this value ? It is not implement on weatherlink.com ?
-
+                                            
                             if q['sensor_type'] == 242:
                                 for pk_sensor in q['data']:
                                     if pk_sensor['ts'] == start_timestamp:
