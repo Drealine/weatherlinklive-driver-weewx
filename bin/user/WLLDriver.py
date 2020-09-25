@@ -402,6 +402,7 @@ class WLLDriverAPI():
                                             wl_packet['UV'] = pk_sensor['uv_index_avg']
                                             wl_packet['radiation'] = pk_sensor['solar_rad_avg']
                                             wl_packet['rain'] = pk_sensor['rainfall_in']
+                                            wl_packet['rainRate'] = pk_sensor['rain_rate_hi_in']
 
                                         if 'extraTemp' in check_key:
                                             extraTemp[sensor] = pk_sensor['temp_last']
