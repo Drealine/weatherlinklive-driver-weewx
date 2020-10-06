@@ -296,6 +296,9 @@ class WLLDriverAPI():
 
             except OSError:
                 logerr("Failure to get realtime data for Wind and Rain")
+            except json.decoder.JSONDecodeError:
+                logerr("Failure to get realtime data for Wind and Rain")
+
 
     # Function to calculate rain and rainRate
     def calculate_rain(self, rainFall_Daily, rainRate, rainSize):
