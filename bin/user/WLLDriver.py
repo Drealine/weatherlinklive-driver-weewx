@@ -6,9 +6,7 @@ DRIVER_VERSION = "0.3"
 import json
 import requests
 import socket
-import urllib.request
 import sys
-import time
 import weewx.drivers
 import weewx.engine
 import weewx.units
@@ -64,7 +62,6 @@ except ImportError:
 
     def logerr(msg):
         logmsg(syslog.LOG_ERR, msg)
-
 
 class WLLDriverAPI():
 
@@ -299,6 +296,9 @@ class WLLDriverAPI():
 
             except OSError:
                 logerr("Failure to get realtime data for Wind and Rain")
+            except json.decoder.JSONDecodeError:
+                logerr("Failure to get realtime data for Wind and Rain")
+
 
     # Function to calculate rain and rainRate
     def calculate_rain(self, rainFall_Daily, rainRate, rainSize):
@@ -415,7 +415,7 @@ class WLLDriverAPI():
                                             wl_packet['windDir'] = pk_sensor['wind_dir_of_prevail']
                                             wl_packet['windGust'] = pk_sensor['wind_speed_hi']
                                             wl_packet['windGustDir'] = pk_sensor['wind_speed_hi_dir']
-                                            
+
                             if q['sensor_type'] == 242:
                                 for pk_sensor in q['data']:
                                     if pk_sensor['ts'] == start_timestamp:
