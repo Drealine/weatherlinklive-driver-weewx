@@ -19,7 +19,7 @@ import math
 import copy
 
 from socket import *
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, time
 
 # Create socket for udp broadcast
 socket_for_udp = socket(AF_INET, SOCK_DGRAM)
@@ -94,6 +94,8 @@ class WLLDriverAPI():
         self.url_realtime_broadcast = "http://{}:{}/v1/real_time?duration=3600".format(self.api_parameters['hostname'],
                                                                                        self.api_parameters['port'])
         logdbg("URL of realtime_broadcast : {}".format(self.url_realtime_broadcast))
+        self.last_midnight = self.get_last_midnight()
+        logdbg("Last midnight set is : {}".format(self.last_midnight))
 
         # Init time to request Health API
         if 'wl_archive_enable' in self.api_parameters and self.api_parameters['wl_archive_enable'] == 1:
@@ -110,6 +112,13 @@ class WLLDriverAPI():
         result = dt + timedelta(minutes=new_minute - dt.minute)
 
         return int(datetime.timestamp(result))
+
+    @staticmethod
+    def get_last_midnight():
+
+        midnight = datetime.combine(datetime.today(), time.min)
+        next_midnight = datetime.timestamp(midnight + timedelta(days=1))
+        return next_midnight
 
     def set_time_health_api(self):
 
@@ -299,9 +308,8 @@ class WLLDriverAPI():
             except json.decoder.JSONDecodeError:
                 logerr("Failure to get realtime data for Wind and Rain")
 
-
     # Function to calculate rain and rainRate
-    def calculate_rain(self, rainFall_Daily, rainRate, rainSize):
+    def calculate_rain(self, dt_wll, rainFall_Daily, rainRate, rainSize):
 
         # Set values to None to prevent no declaration
         rain = None
@@ -319,10 +327,11 @@ class WLLDriverAPI():
         # Calculate rain
         if rainFall_Daily is not None and rain_multiplier is not None:
             if self.rain_previous_period is not None:
-                if (rainFall_Daily - self.rain_previous_period) < 0:
-                    logerr('Not negative number. Set rain to 0. Essentially caused by reset midnight')
+                if self.last_midnight < dt_wll:
+                    loginf('Reset rainfall_Daily at midnight')
                     self.rain_previous_period = 0
                     rain = 0
+                    self.last_midnight = self.get_last_midnight()
                 else:
                     rain = (rainFall_Daily - self.rain_previous_period) * rain_multiplier
 
@@ -605,7 +614,7 @@ class WLLDriverAPI():
             # Get rain and rainRate
             logdbg("rainFall_Daily set : {}".format(rainFall_Daily))
             if self.rain_previous_period is not None:
-                rain, rainRate = self.calculate_rain(rainFall_Daily, rainRate, rainSize)
+                rain, rainRate = self.calculate_rain(wll_packet['dateTime'], rainFall_Daily, rainRate, rainSize)
 
                 if rain is not None:
                     add_current_rain['rain'] = rain
