@@ -19,7 +19,7 @@ import math
 import copy
 
 from socket import *
-from datetime import datetime, timedelta, time
+from datetime import datetime, timedelta
 
 # Create socket for udp broadcast
 socket_for_udp = socket(AF_INET, SOCK_DGRAM)
@@ -116,7 +116,7 @@ class WLLDriverAPI():
     @staticmethod
     def get_last_midnight():
 
-        midnight = datetime.combine(datetime.today(), time.min)
+        midnight = datetime.combine(datetime.today(), datetime.min.time())
         next_midnight = datetime.timestamp(midnight + timedelta(days=1))
         return next_midnight
 
