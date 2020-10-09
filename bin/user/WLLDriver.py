@@ -332,8 +332,13 @@ class WLLDriverAPI():
                     self.rain_previous_period = 0
                     rain = 0
                     self.last_midnight = self.get_last_midnight()
+                    logdbg("Last midnight set is : {}".format(self.last_midnight))
                 else:
-                    rain = (rainFall_Daily - self.rain_previous_period) * rain_multiplier
+                    if (rainFall_Daily - self.rain_previous_period) < 0:
+                        logerr("rain can't be a negative number. Skip this and set rain to 0")
+                        rain = 0
+                    else:
+                        rain = (rainFall_Daily - self.rain_previous_period) * rain_multiplier
 
                 if rain is not None and rainSize is not None and rain > 0:
                     logdbg("Rain now : {}".format(rain))
