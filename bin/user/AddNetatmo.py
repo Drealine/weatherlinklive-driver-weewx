@@ -188,13 +188,19 @@ class NetatmoAPI():
                                 else:
                                     tmp_rain = ext_modules['dashboard_data']['sum_rain_24']
                                     tmp_rain = tmp_rain - self.current_rain
-                                    self.current_rain = ext_modules['dashboard_data']['sum_rain_24']
                                     if self.last_midnight < pk_netatmo['dateTimeNetatmo']:
                                         loginf('Reset rainfall_Daily at midnight')
                                         pk_netatmo['rainNetatmo'] = 0
+                                        self.current_rain = 0
                                         self.last_midnight = self.get_last_midnight()
+                                        logdbg("Last midnight set is : {}".format(self.last_midnight))
                                     else:
-                                        pk_netatmo['rainNetatmo'] = tmp_rain
+                                        if (tmp_rain - self.current_rain) < 0:
+                                            logerr("rain can't be a negative number. Skip this and set rain to 0")
+                                            pk_netatmo['rainNetatmo'] = 0
+                                        else:
+                                            pk_netatmo['rainNetatmo'] = tmp_rain
+                                            self.current_rain = ext_modules['dashboard_data']['sum_rain_24']
 
                             if 'Wind' in ext_modules['data_type']:
                                 pk_netatmo['windSpeedNetatmo'] = ext_modules['dashboard_data']['WindStrength']
