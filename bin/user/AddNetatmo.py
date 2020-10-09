@@ -187,7 +187,6 @@ class NetatmoAPI():
                                     self.current_rain = ext_modules['dashboard_data']['sum_rain_24']
                                 else:
                                     tmp_rain = ext_modules['dashboard_data']['sum_rain_24']
-                                    tmp_rain = tmp_rain - self.current_rain
                                     if self.last_midnight < pk_netatmo['dateTimeNetatmo']:
                                         loginf('Reset rainfall_Daily at midnight')
                                         pk_netatmo['rainNetatmo'] = 0
@@ -199,6 +198,7 @@ class NetatmoAPI():
                                             logerr("rain can't be a negative number. Skip this and set rain to 0")
                                             pk_netatmo['rainNetatmo'] = 0
                                         else:
+                                            tmp_rain = tmp_rain - self.current_rain
                                             pk_netatmo['rainNetatmo'] = tmp_rain
                                             self.current_rain = ext_modules['dashboard_data']['sum_rain_24']
 
