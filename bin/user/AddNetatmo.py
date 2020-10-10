@@ -166,6 +166,7 @@ class NetatmoAPI():
     def calculate_rain(self, dt, rainfall_daily):
 
         rain = None
+        logdbg("Rainfall_Daily set : {}".format(self.current_rain))
 
         if dt is not None and self.last_midnight < dt:
             loginf('Reset rainfall_Daily at midnight')
