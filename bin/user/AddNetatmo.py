@@ -213,7 +213,7 @@ class NetatmoAPI():
                                     # Check this key to prevent problem at midnight
                                     if self.current_rain is None:
                                         self.current_rain = ext_modules['dashboard_data']['sum_rain_24']
-                                        logdbg("Rainfall_Daily set : {}".format(self.current_rain))
+                                        logdbg("Rainfall_Daily set by AddNetatmo : {}".format(self.current_rain))
                                     else:
                                         pk_netatmo['rainNetatmo'] = \
                                             self.calculate_rain(pk_netatmo['dateTimeNetatmo'],
