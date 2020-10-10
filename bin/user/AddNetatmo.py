@@ -165,17 +165,22 @@ class NetatmoAPI():
 
     def calculate_rain(self, dt, rainfall_daily):
 
-        if self.last_midnight < dt:
+        rain = None
+
+        if dt is not None and self.last_midnight < dt:
             loginf('Reset rainfall_Daily at midnight')
             self.current_rain = 0
             self.last_midnight = self.get_last_midnight()
             logdbg("Last midnight set is : {}".format(self.last_midnight))
 
-        if (rainfall_daily - self.current_rain) < 0:
-            logerr("rain can't be a negative number. Skip this and set rain to 0")
-            rain = 0
-        else:
-            rain = rainfall_daily - self.current_rain
+        if rainfall_daily is not None:
+            if (rainfall_daily - self.current_rain) < 0:
+                logerr("rain can't be a negative number. Skip this and set rain to 0")
+                rain = 0
+            else:
+                rain = rainfall_daily - self.current_rain
+
+        if rainfall_daily is not None and rainfall_daily >= 0:
             self.current_rain = rainfall_daily
             logdbg("Rainfall_Daily set after calculated : {}".format(self.current_rain))
 
