@@ -316,7 +316,7 @@ class WLLDriverAPI():
         rain_multiplier = None
 
         # Reset previous rain at midnight
-        if self.last_midnight < dt_wll:
+        if dt_wll is not None and self.last_midnight < dt_wll:
             loginf('Reset rainfall_Daily at midnight')
             self.rain_previous_period = 0
             self.last_midnight = self.get_last_midnight()
