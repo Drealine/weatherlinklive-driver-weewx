@@ -268,7 +268,8 @@ class AddNetatmo(StdService):
             self.NetatmoAPI = NetatmoAPI(clientId=self.netatmo_parameters['client_id'],
                                          clientSecret=self.netatmo_parameters['client_secret'],
                                          username=self.netatmo_parameters['username'],
-                                         password=self.netatmo_parameters['password'],)
+                                         password=self.netatmo_parameters['password'],
+                                         mac_address=self.netatmo_parameters['mac_address'])
 
     def new_archive_record(self, event):
 
