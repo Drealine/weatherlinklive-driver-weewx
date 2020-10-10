@@ -61,6 +61,7 @@ class NetatmoAPI():
                  clientSecret,
                  username,
                  password,
+                 mac_address,
                  scope="read_station"):
 
         postParams = {
@@ -77,6 +78,7 @@ class NetatmoAPI():
 
         self.current_datatime = None
         self.current_rain = None
+        self.mac_address = mac_address
 
         for resp in self.postRequest(self.netatmo_url_token, postParams, type_of_request='first_token'):
             try:
@@ -161,6 +163,24 @@ class NetatmoAPI():
                     logerr("Error while request URL [{}]. Error is : {}".format
                            (url, e))
 
+    def calculate_rain(self, dt, rainfall_daily):
+
+        if self.last_midnight < dt:
+            loginf('Reset rainfall_Daily at midnight')
+            self.current_rain = 0
+            self.last_midnight = self.get_last_midnight()
+            logdbg("Last midnight set is : {}".format(self.last_midnight))
+
+        if (rainfall_daily - self.current_rain) < 0:
+            logerr("rain can't be a negative number. Skip this and set rain to 0")
+            rain = 0
+        else:
+            rain = rainfall_daily - self.current_rain
+            self.current_rain = rainfall_daily
+            logdbg("Rainfall_Daily set after calculated : {}".format(self.current_rain))
+
+        return rain
+
     def decode_current_conditions(self):
 
         pk_netatmo = {}
@@ -172,7 +192,7 @@ class NetatmoAPI():
         try:
             for rp in self.postRequest(self.netatmo_current_conditions, postParams):
                 for int_modules in rp['body']['devices']:
-                    if '70:ee:50:58:90:78' in int_modules['_id']:
+                    if self.mac_address in int_modules['_id']:
                         pk_netatmo['barometerNetatmo'] = int_modules['dashboard_data']['Pressure']
                         pk_netatmo['dateTimeNetatmo'] = int_modules['last_status_store']
 
@@ -183,24 +203,15 @@ class NetatmoAPI():
                                 pk_netatmo['outTempNetatmo'] = ext_modules['dashboard_data']['Temperature']
 
                             if 'Rain' in ext_modules['data_type']:
-                                if self.current_rain is None:
-                                    self.current_rain = ext_modules['dashboard_data']['sum_rain_24']
-                                else:
-                                    tmp_rain = ext_modules['dashboard_data']['sum_rain_24']
-                                    if self.last_midnight < pk_netatmo['dateTimeNetatmo']:
-                                        loginf('Reset rainfall_Daily at midnight')
-                                        pk_netatmo['rainNetatmo'] = 0
-                                        self.current_rain = 0
-                                        self.last_midnight = self.get_last_midnight()
-                                        logdbg("Last midnight set is : {}".format(self.last_midnight))
+                                if 'sum_rain_24' in ext_modules['dashboard_data']:
+                                    # Check this key to prevent problem at midnight
+                                    if self.current_rain is None:
+                                        self.current_rain = ext_modules['dashboard_data']['sum_rain_24']
+                                        logdbg("Rainfall_Daily set : {}".format(self.current_rain))
                                     else:
-                                        if (tmp_rain - self.current_rain) < 0:
-                                            logerr("rain can't be a negative number. Skip this and set rain to 0")
-                                            pk_netatmo['rainNetatmo'] = 0
-                                        else:
-                                            tmp_rain = tmp_rain - self.current_rain
-                                            pk_netatmo['rainNetatmo'] = tmp_rain
-                                            self.current_rain = ext_modules['dashboard_data']['sum_rain_24']
+                                        pk_netatmo['rainNetatmo'] = \
+                                            self.calculate_rain(pk_netatmo['dateTimeNetatmo'],
+                                                                ext_modules['dashboard_data']['sum_rain_24'])
 
                             if 'Wind' in ext_modules['data_type']:
                                 pk_netatmo['windSpeedNetatmo'] = ext_modules['dashboard_data']['WindStrength']
@@ -243,7 +254,8 @@ class AddNetatmo(StdService):
             self.netatmo_parameters = {'client_id': str(config_dict['WLLDriver'].get('client_id', None)),
                                        'client_secret': str(config_dict['WLLDriver'].get('client_secret', None)),
                                        'username': str(config_dict['WLLDriver'].get('username', None)),
-                                       'password': str(config_dict['WLLDriver'].get('password', None))}
+                                       'password': str(config_dict['WLLDriver'].get('password', None)),
+                                       'mac_address': str(config_dict['WLLDriver'].get('mac_address', None))}
             for key in self.netatmo_parameters:
                 if self.netatmo_parameters[key] is None:
                     raise weewx.ViolatedPrecondition("{} must be set".format(key))
@@ -251,7 +263,7 @@ class AddNetatmo(StdService):
             self.NetatmoAPI = NetatmoAPI(clientId=self.netatmo_parameters['client_id'],
                                          clientSecret=self.netatmo_parameters['client_secret'],
                                          username=self.netatmo_parameters['username'],
-                                         password=self.netatmo_parameters['password'])
+                                         password=self.netatmo_parameters['password'],)
 
     def new_archive_record(self, event):
 
