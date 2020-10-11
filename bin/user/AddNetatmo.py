@@ -218,10 +218,6 @@ class NetatmoAPI():
                                         pk_netatmo['rainNetatmo'] = \
                                             self.calculate_rain(pk_netatmo['dateTimeNetatmo'],
                                                                 ext_modules['dashboard_data']['sum_rain_24'])
-                                else:
-                                    logerr("Summary rain 24h not implemented in Netatmo API after midnight. Try at next"
-                                           " archive interval")
-                                    pk_netatmo['rainNetatmo'] = 0
 
                             if 'Wind' in ext_modules['data_type']:
                                 pk_netatmo['windSpeedNetatmo'] = ext_modules['dashboard_data']['WindStrength']
@@ -295,10 +291,14 @@ class AddNetatmo(StdService):
                 barometer_converted_vt = weewx.units.convertStd(barometer_vt, event.record['usUnits'])
                 event.record['barometerNetatmo'] = barometer_converted_vt.value
 
-                rain_vt = weewx.units.ValueTuple(_netatmo_pk['rainNetatmo'],
-                                                      'mm', 'group_rain')
-                rain_converted_vt = weewx.units.convertStd(rain_vt, event.record['usUnits'])
-                event.record['rainNetatmo'] = rain_converted_vt.value
+                if 'rainNetatmo' in _netatmo_pk:
+                    rain_vt = weewx.units.ValueTuple(_netatmo_pk['rainNetatmo'],
+                                                          'mm', 'group_rain')
+                    rain_converted_vt = weewx.units.convertStd(rain_vt, event.record['usUnits'])
+                    event.record['rainNetatmo'] = rain_converted_vt.value
+                else:
+                    logerr("Summary rain 24h not implemented in Netatmo API after midnight. Try at next"
+                           " archive interval")
 
                 outtemp_vt = weewx.units.ValueTuple(_netatmo_pk['outTempNetatmo'],
                                                  'degree_C', 'group_temperature')
