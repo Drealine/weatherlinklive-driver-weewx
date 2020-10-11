@@ -222,10 +222,6 @@ class NetatmoAPI():
                                     logerr("Summary rain 24h not implemented in Netatmo API after midnight. Try at next"
                                            " archive interval")
                                     pk_netatmo['rainNetatmo'] = 0
-                            else:
-                                logerr("Rain not implemented in Netatmo API after midnight. Try at next"
-                                       " archive interval")
-                                pk_netatmo['rainNetatmo'] = 0
 
                             if 'Wind' in ext_modules['data_type']:
                                 pk_netatmo['windSpeedNetatmo'] = ext_modules['dashboard_data']['WindStrength']
