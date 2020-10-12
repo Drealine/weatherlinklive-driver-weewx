@@ -79,6 +79,7 @@ class NetatmoAPI():
         self.current_datatime = None
         self.current_rain = None
         self.mac_address = mac_address
+        self.last_midnight = None
 
         for resp in self.postRequest(self.netatmo_url_token, postParams, type_of_request='first_token'):
             try:
@@ -97,15 +98,14 @@ class NetatmoAPI():
             except IndexError as e:
                 logerr("Structure type of Netatmo is not valid. Authentication request rejected")
 
-        self.last_midnight = self.get_last_midnight()
-        logdbg("Last midnight set is : {}".format(self.last_midnight))
-
     @staticmethod
-    def get_last_midnight():
+    def get_last_midnight(dt):
 
-        midnight = datetime.combine(datetime.today(), datetime.min.time())
-        next_midnight = datetime.timestamp(midnight + timedelta(days=1))
-        return next_midnight
+        if dt is not None:
+            dt_timestamp = datetime.fromtimestamp(dt)
+            midnight = datetime.combine(dt_timestamp.today(), dt_timestamp.min.time())
+            next_midnight = datetime.timestamp(midnight + timedelta(days=1))
+            return next_midnight
 
     @property
     def accessToken(self):
@@ -198,9 +198,11 @@ class NetatmoAPI():
         try:
             for rp in self.postRequest(self.netatmo_current_conditions, postParams):
                 for int_modules in rp['body']['devices']:
+
                     if self.mac_address in int_modules['_id']:
                         pk_netatmo['barometerNetatmo'] = int_modules['dashboard_data']['Pressure']
                         pk_netatmo['dateTimeNetatmo'] = int_modules['last_status_store']
+                        dt = int_modules['last_status_store']
 
                         for ext_modules in int_modules['modules']:
                             if 'Temperature' in ext_modules['data_type'] and \
@@ -211,6 +213,10 @@ class NetatmoAPI():
                             if 'Rain' in ext_modules['data_type']:
                                 if 'sum_rain_24' in ext_modules['dashboard_data']:
                                     # Check this key to prevent problem at midnight
+                                    if dt is not None and self.last_midnight is None:
+                                        self.last_midnight = self.get_last_midnight(int(dt))
+                                        logdbg("Last midnight set is : {}".format(self.last_midnight))
+
                                     if self.current_rain is None:
                                         self.current_rain = ext_modules['dashboard_data']['sum_rain_24']
                                         logdbg("Rainfall_Daily set by AddNetatmo : {}".format(self.current_rain))
