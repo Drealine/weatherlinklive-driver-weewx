@@ -194,6 +194,7 @@ class NetatmoAPI():
         postParams = {
             "access_token": auth_token
         }
+        sum_rain_24 = None
 
         try:
             for rp in self.postRequest(self.netatmo_current_conditions, postParams):
@@ -202,7 +203,6 @@ class NetatmoAPI():
                     if self.mac_address in int_modules['_id']:
                         pk_netatmo['barometerNetatmo'] = int_modules['dashboard_data']['Pressure']
                         pk_netatmo['dateTimeNetatmo'] = int_modules['last_status_store']
-                        dt = int_modules['last_status_store']
 
                         for ext_modules in int_modules['modules']:
                             if 'Temperature' in ext_modules['data_type'] and \
@@ -213,23 +213,26 @@ class NetatmoAPI():
                             if 'Rain' in ext_modules['data_type']:
                                 if 'sum_rain_24' in ext_modules['dashboard_data']:
                                     # Check this key to prevent problem at midnight
-                                    if dt is not None and self.last_midnight is None:
-                                        self.last_midnight = self.get_last_midnight(int(dt))
-                                        logdbg("Last midnight set is : {}".format(self.last_midnight))
-
-                                    if self.current_rain is None:
-                                        self.current_rain = ext_modules['dashboard_data']['sum_rain_24']
-                                        logdbg("Rainfall_Daily set by AddNetatmo : {}".format(self.current_rain))
-                                    else:
-                                        pk_netatmo['rainNetatmo'] = \
-                                            self.calculate_rain(pk_netatmo['dateTimeNetatmo'],
-                                                                ext_modules['dashboard_data']['sum_rain_24'])
+                                    sum_rain_24 = ext_modules['dashboard_data']['sum_rain_24']
 
                             if 'Wind' in ext_modules['data_type']:
                                 pk_netatmo['windSpeedNetatmo'] = ext_modules['dashboard_data']['WindStrength']
                                 pk_netatmo['windDirNetatmo'] = ext_modules['dashboard_data']['WindAngle']
                                 pk_netatmo['windGustNetatmo'] = ext_modules['dashboard_data']['GustStrength']
                                 pk_netatmo['windGustDirNetatmo'] = ext_modules['dashboard_data']['GustAngle']
+
+            if pk_netatmo['dateTimeNetatmo'] is not None and self.last_midnight is None:
+                self.last_midnight = self.get_last_midnight(pk_netatmo['dateTimeNetatmo'])
+                logdbg("Last midnight set is : {}".format(self.last_midnight))
+
+            if self.current_rain is None:
+                if sum_rain_24 is not None:
+                    self.current_rain = sum_rain_24
+                    logdbg("Rainfall_Daily set by AddNetatmo : {}".format(self.current_rain))
+            else:
+                if sum_rain_24 is not None:
+                    pk_netatmo['rainNetatmo'] = self.calculate_rain(pk_netatmo['dateTimeNetatmo'],
+                                                                    sum_rain_24)
 
             if pk_netatmo != {} and pk_netatmo is not None:
                 if self.current_datatime is None:
@@ -288,18 +291,18 @@ class AddNetatmo(StdService):
                 event.record['windSpeedNetatmo'] = wind_speed_converted_vt.value
 
                 wind_gust_vt = weewx.units.ValueTuple(_netatmo_pk['windGustNetatmo'],
-                                                       'km_per_hour', 'group_speed')
+                                                      'km_per_hour', 'group_speed')
                 wind_gust_converted_vt = weewx.units.convertStd(wind_gust_vt, event.record['usUnits'])
                 event.record['windGustNetatmo'] = wind_gust_converted_vt.value
 
                 barometer_vt = weewx.units.ValueTuple(_netatmo_pk['barometerNetatmo'],
-                                                       'hPa', 'group_pressure')
+                                                      'hPa', 'group_pressure')
                 barometer_converted_vt = weewx.units.convertStd(barometer_vt, event.record['usUnits'])
                 event.record['barometerNetatmo'] = barometer_converted_vt.value
 
                 if 'rainNetatmo' in _netatmo_pk:
                     rain_vt = weewx.units.ValueTuple(_netatmo_pk['rainNetatmo'],
-                                                          'mm', 'group_rain')
+                                                     'mm', 'group_rain')
                     rain_converted_vt = weewx.units.convertStd(rain_vt, event.record['usUnits'])
                     event.record['rainNetatmo'] = rain_converted_vt.value
                 else:
@@ -307,7 +310,7 @@ class AddNetatmo(StdService):
                            " archive interval")
 
                 outtemp_vt = weewx.units.ValueTuple(_netatmo_pk['outTempNetatmo'],
-                                                 'degree_C', 'group_temperature')
+                                                    'degree_C', 'group_temperature')
                 outtemp_converted_vt = weewx.units.convertStd(outtemp_vt, event.record['usUnits'])
                 event.record['outTempNetatmo'] = outtemp_converted_vt.value
 
