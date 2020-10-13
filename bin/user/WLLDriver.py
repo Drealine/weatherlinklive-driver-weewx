@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 DRIVER_NAME = "WLLDriver"
-DRIVER_VERSION = "0.3"
+DRIVER_VERSION = "0.3a"
 
 import json
 import requests
@@ -63,6 +63,7 @@ except ImportError:
     def logerr(msg):
         logmsg(syslog.LOG_ERR, msg)
 
+
 class WLLDriverAPI():
 
     def __init__(self, api_parameters):
@@ -94,8 +95,7 @@ class WLLDriverAPI():
         self.url_realtime_broadcast = "http://{}:{}/v1/real_time?duration=3600".format(self.api_parameters['hostname'],
                                                                                        self.api_parameters['port'])
         logdbg("URL of realtime_broadcast : {}".format(self.url_realtime_broadcast))
-        self.last_midnight = self.get_last_midnight()
-        logdbg("Last midnight set is : {}".format(self.last_midnight))
+        self.last_midnight = None
 
         # Init time to request Health API
         if 'wl_archive_enable' in self.api_parameters and self.api_parameters['wl_archive_enable'] == 1:
@@ -114,11 +114,13 @@ class WLLDriverAPI():
         return int(datetime.timestamp(result))
 
     @staticmethod
-    def get_last_midnight():
+    def get_last_midnight(dt):
 
-        midnight = datetime.combine(datetime.today(), datetime.min.time())
-        next_midnight = datetime.timestamp(midnight + timedelta(days=1))
-        return next_midnight
+        if dt is not None:
+            dt_timestamp = datetime.fromtimestamp(dt)
+            midnight = datetime.combine(dt_timestamp.today(), dt_timestamp.min.time())
+            next_midnight = datetime.timestamp(midnight + timedelta(days=1))
+            return next_midnight
 
     def set_time_health_api(self):
 
@@ -315,6 +317,13 @@ class WLLDriverAPI():
         rain = None
         rain_multiplier = None
 
+        # Reset previous rain at midnight
+        if dt_wll is not None and self.last_midnight < dt_wll:
+            loginf('Reset rainfall_Daily at midnight')
+            self.rain_previous_period = 0
+            self.last_midnight = self.get_last_midnight(int(dt_wll))
+            logdbg("Last midnight set is : {}".format(self.last_midnight))
+
         # Check bucket size
         if rainSize is not None:
             if rainSize == 1:
@@ -327,11 +336,9 @@ class WLLDriverAPI():
         # Calculate rain
         if rainFall_Daily is not None and rain_multiplier is not None:
             if self.rain_previous_period is not None:
-                if self.last_midnight < dt_wll:
-                    loginf('Reset rainfall_Daily at midnight')
-                    self.rain_previous_period = 0
+                if (rainFall_Daily - self.rain_previous_period) < 0:
+                    logerr("rain can't be a negative number. Skip this and set rain to 0")
                     rain = 0
-                    self.last_midnight = self.get_last_midnight()
                 else:
                     rain = (rainFall_Daily - self.rain_previous_period) * rain_multiplier
 
@@ -528,15 +535,11 @@ class WLLDriverAPI():
         wll_packet = {'dateTime': None,
                       'usUnits': weewx.US,
                       }
-        udp_wll_packet = {'dateTime': None,
-                          'usUnits': weewx.US,
-                          }
         extraTemp = {}
         extraHumid = {}
         add_current_rain = {}
 
         # Set values to None
-        _packet = None
         rainFall_Daily = None
         rainRate = None
         rainSize = None
@@ -594,43 +597,47 @@ class WLLDriverAPI():
 
                 if type_of_packet == 'realtime_broadcast':
                     logdbg('Realtime broadcast received : {}'.format(data))
-                    udp_wll_packet['dateTime'] = data['ts']
+                    wll_packet['dateTime'] = data['ts']
 
                     for s in data['conditions']:
                         if s['data_structure_type'] == 1:
                             if s['txid'] == self.dict_device_id[sensor]:
                                 if self.api_parameters['realtime_enable'] == 1:
                                     if sensor in self.list_iss or sensor in self.list_anemometer:
-                                        udp_wll_packet['windSpeed'] = s['wind_speed_last']
-                                        udp_wll_packet['windDir'] = s['wind_dir_last']
-                                        udp_wll_packet['windGust'] = s['wind_speed_hi_last_10_min']
-                                        udp_wll_packet['windGustDir'] = s['wind_dir_at_hi_speed_last_10_min']
+                                        wll_packet['windSpeed'] = s['wind_speed_last']
+                                        wll_packet['windDir'] = s['wind_dir_last']
+                                        wll_packet['windGust'] = s['wind_speed_hi_last_10_min']
+                                        wll_packet['windGustDir'] = s['wind_dir_at_hi_speed_last_10_min']
 
                                     if sensor in self.list_iss:
                                         rainRate = s['rain_rate_last']
                                         rainFall_Daily = s['rainfall_daily']
                                         rainSize = s['rain_size']
 
+            # Set last midnight and rainfall_daily at the first call
+            if self.last_midnight is None and wll_packet['dateTime'] is not None:
+                self.last_midnight = self.get_last_midnight(wll_packet['dateTime'])
+                logdbg("Last midnight set is : {}".format(self.last_midnight))
+            if self.rain_previous_period is None:
+                if rainFall_Daily is not None:
+                    if rainFall_Daily >= 0:
+                        self.rain_previous_period = rainFall_Daily
+                        logdbg("rainFall_Daily set by WLLDriver : {}".format(self.rain_previous_period))
+
             # Get rain and rainRate
             logdbg("rainFall_Daily set : {}".format(rainFall_Daily))
-            if self.rain_previous_period is not None:
+            if self.rain_previous_period is not None and wll_packet['dateTime'] is not None:
                 rain, rainRate = self.calculate_rain(wll_packet['dateTime'], rainFall_Daily, rainRate, rainSize)
 
                 if rain is not None:
                     add_current_rain['rain'] = rain
                 if rainRate is not None:
                     add_current_rain['rainRate'] = rainRate
-            else:
-                if rainFall_Daily is not None:
-                    if rainFall_Daily >= 0:
-                        self.rain_previous_period = rainFall_Daily
-                        logdbg("rainFall_Daily set by WLLDriver : {}".format(self.rain_previous_period))
+
+                wll_packet.update(add_current_rain)
 
             # Get current_condition
             if type_of_packet == 'current_conditions':
-                if add_current_rain is not None and add_current_rain != {}:
-                    wll_packet.update(add_current_rain)
-
                 if len(self.dict_device_id) > 1:
                     if extraTemp is not None and extraTemp != {}:
                         wll_packet.update(extraTemp)
@@ -641,28 +648,12 @@ class WLLDriverAPI():
                     for _health_packet in self.check_health_api(time.time()):
                         wll_packet.update(_health_packet)
 
-                if wll_packet['dateTime'] is not None:
-                    _packet = copy.copy(wll_packet)
-
-                logdbg("Current conditions Weewx packet : {}".format(_packet))
-
-            # Get realtime_broadcast
-            if type_of_packet == 'realtime_broadcast':
-                if add_current_rain is not None and add_current_rain != {}:
-                    udp_wll_packet.update(add_current_rain)
-
-                logdbg("Realtime broadcast Weewx packet : {}".format(udp_wll_packet))
-
-                if udp_wll_packet['dateTime'] is not None:
-                    _packet = copy.copy(udp_wll_packet)
-
             # Check datetime of packet to prevent no sync clock
             before_time = time.time() - 120
             after_time = time.time() + 120
-            if _packet is not None and _packet['dateTime'] is not None and \
-                    before_time <= _packet['dateTime'] <= after_time:
-                loginf("Weewx packet from WLL module : {}".format(_packet))
-                yield _packet
+            if wll_packet['dateTime'] is not None and before_time <= wll_packet['dateTime'] <= after_time:
+                loginf("Weewx packet from WLL module : {}".format(wll_packet))
+                yield wll_packet
             else:
                 logerr("No data in WLL packet")
                 return
