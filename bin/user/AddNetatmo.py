@@ -221,32 +221,32 @@ class NetatmoAPI():
                                 pk_netatmo['windGustNetatmo'] = ext_modules['dashboard_data']['GustStrength']
                                 pk_netatmo['windGustDirNetatmo'] = ext_modules['dashboard_data']['GustAngle']
 
-            if pk_netatmo['dateTimeNetatmo'] is not None and self.last_midnight is None:
-                self.last_midnight = self.get_last_midnight(pk_netatmo['dateTimeNetatmo'])
-                logdbg("Last midnight set is : {}".format(self.last_midnight))
+                if pk_netatmo['dateTimeNetatmo'] is not None and self.last_midnight is None:
+                    self.last_midnight = self.get_last_midnight(pk_netatmo['dateTimeNetatmo'])
+                    logdbg("Last midnight set is : {}".format(self.last_midnight))
 
-            if self.current_rain is None:
-                if sum_rain_24 is not None:
-                    self.current_rain = sum_rain_24
-                    logdbg("Rainfall_Daily set by AddNetatmo : {}".format(self.current_rain))
-            else:
-                if sum_rain_24 is not None:
-                    pk_netatmo['rainNetatmo'] = self.calculate_rain(pk_netatmo['dateTimeNetatmo'],
-                                                                    sum_rain_24)
-
-            if pk_netatmo != {} and pk_netatmo is not None:
-                if self.current_datatime is None:
-                    self.current_datatime = pk_netatmo['dateTimeNetatmo']
-                    loginf("Current last seen of Netatmo is {}. Wait next archive from Netatmo to sync "
-                           "with Weewx database".format(self.current_datatime))
+                if self.current_rain is None:
+                    if sum_rain_24 is not None:
+                        self.current_rain = sum_rain_24
+                        logdbg("Rainfall_Daily set by AddNetatmo : {}".format(self.current_rain))
                 else:
-                    if self.current_datatime != pk_netatmo['dateTimeNetatmo']:
+                    if sum_rain_24 is not None:
+                        pk_netatmo['rainNetatmo'] = self.calculate_rain(pk_netatmo['dateTimeNetatmo'],
+                                                                        sum_rain_24)
+
+                if pk_netatmo != {} and pk_netatmo is not None:
+                    if self.current_datatime is None:
                         self.current_datatime = pk_netatmo['dateTimeNetatmo']
-                        loginf("Last seen Netatmo : {}".format(self.current_datatime))
-                        logdbg("Weewx archive packet from Netatmo : {}".format(pk_netatmo))
-                        yield pk_netatmo
+                        loginf("Current last seen of Netatmo is {}. Wait next archive from Netatmo to sync "
+                               "with Weewx database".format(self.current_datatime))
                     else:
-                        loginf("No new archive from Netatmo. Last seen : {}".format(self.current_datatime))
+                        if self.current_datatime != pk_netatmo['dateTimeNetatmo']:
+                            self.current_datatime = pk_netatmo['dateTimeNetatmo']
+                            loginf("Last seen Netatmo : {}".format(self.current_datatime))
+                            logdbg("Weewx archive packet from Netatmo : {}".format(pk_netatmo))
+                            yield pk_netatmo
+                        else:
+                            loginf("No new archive from Netatmo. Last seen : {}".format(self.current_datatime))
 
         except KeyError as e:
             logerr('API Data from Netatmo is invalid. Error is : {}'.format(e))
