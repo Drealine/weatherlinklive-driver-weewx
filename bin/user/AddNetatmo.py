@@ -171,7 +171,7 @@ class NetatmoAPI():
         if dt is not None and self.last_midnight < dt:
             loginf('Reset rainfall_Daily at midnight')
             self.current_rain = 0
-            self.last_midnight = self.get_last_midnight()
+            self.last_midnight = self.get_last_midnight(dt)
             logdbg("Last midnight set is : {}".format(self.last_midnight))
 
         if rainfall_daily is not None:
