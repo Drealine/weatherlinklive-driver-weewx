@@ -2,7 +2,6 @@ WLLDriver
 ============
 Driver to make request to WeatherLinkLive module including archive from Weatherlink.com when data be lost on Weewx.
 Work only with Python3 and higher.
-
 ## Installation
 
 - Download the latest release of WLLDriver : https://github.com/Drealine/weatherlinklive-driver-weewx/releases
