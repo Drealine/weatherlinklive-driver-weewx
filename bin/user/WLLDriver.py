@@ -435,7 +435,7 @@ class WLLDriverAPI():
                             if q['sensor_type'] == 242:
                                 for pk_sensor in q['data']:
                                     if pk_sensor['ts'] == start_timestamp:
-                                        wl_packet['barometer'] = pk_sensor['bar_sea_level']
+                                        wl_packet['altimeter'] = pk_sensor['bar_sea_level']
                                         wl_packet['pressure'] = pk_sensor['bar_absolute']
 
                             if q['sensor_type'] == 243:
@@ -587,7 +587,7 @@ class WLLDriverAPI():
 
                         # Next lines are not extra, so no need ID
                         if s['data_structure_type'] == 3:
-                            wll_packet['barometer'] = s['bar_sea_level']
+                            wll_packet['altimeter'] = s['bar_sea_level']
                             wll_packet['pressure'] = s['bar_absolute']
 
                         if s['data_structure_type'] == 4:
