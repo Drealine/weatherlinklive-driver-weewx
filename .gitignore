@@ -7,3 +7,5 @@
 .idea/modules.xml
 .idea/weatherlinklive-driver-weewx.iml
 .idea/workspace.xml
+docs/_config.yml
+docs/index.md
