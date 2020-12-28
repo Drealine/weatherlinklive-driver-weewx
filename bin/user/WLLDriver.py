@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 DRIVER_NAME = "WLLDriver"
-DRIVER_VERSION = "0.3a"
+DRIVER_VERSION = "2020.12-1"
 
 import json
 import requests
@@ -317,13 +317,6 @@ class WLLDriverAPI():
         rain = None
         rain_multiplier = None
 
-        # Reset previous rain at midnight
-        if dt_wll is not None and self.last_midnight < dt_wll:
-            loginf('Reset rainfall_Daily at midnight')
-            self.rain_previous_period = 0
-            self.last_midnight = self.get_last_midnight(int(dt_wll))
-            logdbg("Last midnight set is : {}".format(self.last_midnight))
-
         # Check bucket size
         if rainSize is not None:
             if rainSize == 1:
@@ -333,24 +326,36 @@ class WLLDriverAPI():
             if rainSize == 3:
                 rain_multiplier = 0.1
 
-        # Calculate rain
-        if rainFall_Daily is not None and rain_multiplier is not None:
-            if self.rain_previous_period is not None:
-                if (rainFall_Daily - self.rain_previous_period) < 0:
-                    logerr("rain can't be a negative number. Skip this and set rain to 0")
-                    rain = 0
-                else:
-                    rain = (rainFall_Daily - self.rain_previous_period) * rain_multiplier
-
-                if rain is not None and rainSize is not None and rain > 0:
-                    logdbg("Rain now : {}".format(rain))
-
-                    if rainSize == 2:
-                        rain = rain / 25.4
-                    if rainSize == 3:
-                        rain = rain / 2.54
+        # Reset previous rain at midnight
+        if dt_wll is not None and self.last_midnight < dt_wll:
+            loginf('Reset rainfall_Daily at midnight. Skip rainfall_daily calculate to prevent overflow value')
+            self.rain_previous_period = 0
+            self.last_midnight = self.get_last_midnight(int(dt_wll))
+            logdbg("Last midnight set is : {}".format(self.last_midnight))
         else:
-            rain = None
+            # Calculate rain
+            if rainFall_Daily is not None and rain_multiplier is not None:
+                if self.rain_previous_period is not None:
+                    if (rainFall_Daily - self.rain_previous_period) < 0:
+                        logerr("rain can't be a negative number. Skip this and set rain to 0")
+                        rain = 0
+                    else:
+                        rain = (rainFall_Daily - self.rain_previous_period) * rain_multiplier
+
+                    if rain is not None and rainSize is not None and rain > 0:
+                        logdbg("Rain now : {}".format(rain))
+
+                        if rainSize == 2:
+                            rain = rain / 25.4
+                        if rainSize == 3:
+                            rain = rain / 2.54
+            else:
+                rain = None
+
+            # Set rainFall_Daily to previous rain
+            if rainFall_Daily is not None and rainFall_Daily >= 0:
+                self.rain_previous_period = rainFall_Daily
+                logdbg("Rainfall_Daily set after calculated : {}".format(self.rain_previous_period))
 
         # Calculate rainRate
         if rainRate is not None and rain_multiplier is not None:
@@ -364,11 +369,6 @@ class WLLDriverAPI():
                     rainRate = rainRate / 2.54
         else:
             rainRate = None
-
-        # Set rainFall_Daily to previous rain
-        if rainFall_Daily is not None and rainFall_Daily >= 0:
-            self.rain_previous_period = rainFall_Daily
-            logdbg("Rainfall_Daily set after calculated : {}".format(self.rain_previous_period))
 
         return rain, rainRate
 
